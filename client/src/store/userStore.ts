@@ -171,9 +171,9 @@ export const clearAllAuthData = () => {
 export const getRedirectPath = (role: string) => {
   switch (role) {
     case "admin":
-      return "/admin";
+      return "/admin-dashboard";
     case "consumer":
-      return "/dashboard";
+      return "/consumer-dashboard";
     case "provider":
       return "/provider-dashboard";
     default:

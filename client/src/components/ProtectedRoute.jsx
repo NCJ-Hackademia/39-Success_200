@@ -81,9 +81,9 @@ const getRedirectPath = (user) => {
 
   switch (user.role) {
     case "admin":
-      return "/admin";
+      return "/admin-dashboard";
     case "consumer":
-      return "/dashboard";
+      return "/consumer-dashboard";
     case "provider":
       return "/provider-dashboard";
     default:

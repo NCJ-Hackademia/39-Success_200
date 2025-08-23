@@ -119,7 +119,7 @@ export const useAuth = () => {
         return "/provider-dashboard";
       case "consumer":
       default:
-        return "/dashboard";
+        return "/consumer-dashboard";
     }
   };
 

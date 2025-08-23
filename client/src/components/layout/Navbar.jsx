@@ -55,22 +55,31 @@ const Navbar = () => {
 
     const baseItems = [
       { href: "/", label: "Home", icon: Home },
+      { href: "/issues", label: "Issues", icon: Wrench },
       { href: "/map", label: "Map View", icon: MapPin },
     ];
 
     if (auth.isAdmin) {
       return [
         ...baseItems,
-        { href: "/admin", label: "Admin Panel", icon: Shield },
-        { href: "/admin/users", label: "Manage Users", icon: User },
-        { href: "/admin/issues", label: "All Issues", icon: Wrench },
+        { href: "/admin-dashboard", label: "Admin Panel", icon: Shield },
+        { href: "/admin-dashboard/users", label: "Manage Users", icon: User },
+        { href: "/admin-dashboard/issues", label: "All Issues", icon: Wrench },
       ];
     } else if (auth.isConsumer) {
       return [
         ...baseItems,
-        { href: "/dashboard", label: "Dashboard", icon: User },
-        { href: "/dashboard/issues", label: "My Issues", icon: Wrench },
-        { href: "/dashboard/bookings", label: "My Bookings", icon: null },
+        { href: "/consumer-dashboard", label: "Dashboard", icon: User },
+        {
+          href: "/consumer-dashboard/issues",
+          label: "My Issues",
+          icon: Wrench,
+        },
+        {
+          href: "/consumer-dashboard/bookings",
+          label: "My Bookings",
+          icon: null,
+        },
         { href: "/services", label: "Find Services", icon: null },
       ];
     } else if (auth.isProvider) {

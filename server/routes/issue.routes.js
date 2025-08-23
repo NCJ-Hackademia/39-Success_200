@@ -5,6 +5,7 @@ import {
   createIssue,
   updateIssue,
   deleteIssue,
+  upvoteIssue,
 } from "../controllers/issue.controller.js";
 import { authenticate } from "../middleware/auth.js";
 
@@ -32,5 +33,12 @@ router.put(
 
 // Delete issue (consumer can delete their own, admin can delete any)
 router.delete("/:id", authenticate(["admin", "consumer"]), deleteIssue);
+
+// Upvote/downvote issue (all authenticated users)
+router.patch(
+  "/:id/upvote",
+  authenticate(["admin", "provider", "consumer"]),
+  upvoteIssue
+);
 
 export default router;

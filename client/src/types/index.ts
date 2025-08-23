@@ -43,17 +43,25 @@ export interface Location {
 
 // Issue/Report interface for citizen reports
 export interface Issue {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
-  category: IssueCategory;
+  category: any; // Can be ObjectId string or populated Category object
   status: IssueStatus;
   priority: IssuePriority;
-  location: Location;
-  reportedBy: string; // User ID
+  location: {
+    address?: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  consumer: string; // User ID who reported
   reportedByUser?: User; // Populated user data
-  assignedTo?: string; // Provider ID
-  assignedProvider?: User; // Populated provider data
+  assignedProvider?: string; // Provider ID
+  assignedTo?: string; // Provider ID (alias)
+  assignedProviderUser?: User; // Populated provider data
   images: string[]; // Array of image URLs
   upvotes: number;
   upvotedBy: string[]; // Array of user IDs
@@ -63,7 +71,7 @@ export interface Issue {
   completionDate?: string;
   adminNotes?: string;
   providerNotes?: string;
-  isVerified: boolean; // Admin verification
+  isVerified?: boolean; // Admin verification
   createdAt: string;
   updatedAt: string;
 }

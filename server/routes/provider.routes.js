@@ -11,6 +11,7 @@ import {
   addService,
   removeService,
   getProviderStatistics,
+  getProviderBookings,
   verifyProvider,
 } from "../controllers/provider.controller.js";
 import { authenticate } from "../middleware/auth.js";
@@ -25,6 +26,9 @@ router.delete("/profile", authenticate(["provider"]), deleteProviderProfile);
 
 // Provider statistics - MUST come before /:id route
 router.get("/statistics/me", authenticate(["provider"]), getProviderStatistics);
+
+// Provider bookings - MUST come before /:id route
+router.get("/bookings", authenticate(["provider"]), getProviderBookings);
 
 // Public routes
 router.get("/", getAllProviders);

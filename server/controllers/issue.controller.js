@@ -9,15 +9,52 @@ export const getAllIssues = async (req, res) => {
       filter.consumer = req.user.id;
     }
 
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sorting
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+    const sort = { [sortBy]: sortOrder };
+
+    // Status filter
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    // Category filter
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
+    // Get total count for pagination
+    const total = await Issue.countDocuments(filter);
+
     const issues = await Issue.find(filter)
       .populate("consumer", "name email")
       .populate("assignedProvider", "name email")
       .populate("category", "name description icon")
-      .sort({ createdAt: -1 });
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
 
     res.status(200).json({
       success: true,
       data: issues,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -157,6 +194,44 @@ export const deleteIssue = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Issue deleted successfully",
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const upvoteIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
+
+    const userId = req.user.id;
+    const hasUpvoted = issue.upvotedBy.includes(userId);
+
+    if (hasUpvoted) {
+      // Remove upvote
+      issue.upvotedBy = issue.upvotedBy.filter(
+        (id) => id.toString() !== userId
+      );
+      issue.upvotes = Math.max(0, issue.upvotes - 1);
+    } else {
+      // Add upvote
+      issue.upvotedBy.push(userId);
+      issue.upvotes += 1;
+    }
+
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: hasUpvoted ? "Upvote removed" : "Issue upvoted",
+      data: {
+        upvotes: issue.upvotes,
+        hasUpvoted: !hasUpvoted,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
