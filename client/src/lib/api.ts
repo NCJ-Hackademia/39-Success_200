@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useUserStore } from "@/store/userStore";
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -12,9 +13,12 @@ const api = axios.create({
 // Request interceptor for adding auth tokens
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage or your preferred storage
-    const token =
+    // Get token from Zustand store or fallback to localStorage
+    const storeToken = useUserStore.getState().token;
+    const localToken =
       typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+    const token = storeToken || localToken;
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -36,6 +40,9 @@ api.interceptors.response.use(
     // Handle common HTTP error statuses
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
+      const { clearAuth } = useUserStore.getState();
+      clearAuth();
+
       if (typeof window !== "undefined") {
         localStorage.removeItem("authToken");
         // You can add redirect logic here
