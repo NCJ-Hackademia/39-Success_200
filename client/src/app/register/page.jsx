@@ -291,7 +291,7 @@ export default function RegisterPage() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Account Type *
                 </label>
-                
+
                 {/* Step 1: Admin or User */}
                 <div className="grid grid-cols-2 gap-3">
                   <button
