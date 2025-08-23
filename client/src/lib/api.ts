@@ -1,5 +1,14 @@
 import axios from "axios";
 import { useUserStore } from "@/store/userStore";
+import type {
+  ApiResponse,
+  LoginResponse,
+  User,
+  Issue,
+  Service,
+  Booking,
+  PaginationParams,
+} from "@/types";
 
 // Create axios instance with base configuration
 const api = axios.create({

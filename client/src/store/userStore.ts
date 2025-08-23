@@ -1,36 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { User } from "@/types";
 
-// Define user interface for HACKADEMIA
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role: "admin" | "consumer" | "provider";
-  avatar?: string;
-  location?: {
-    lat: number;
-    lng: number;
-    address: string;
-  };
-  // Provider-specific fields
-  providerDetails?: {
-    category: string; // plumber, electrician, carpenter, etc.
-    verified: boolean;
-    rating: number;
-    completedJobs: number;
-    description: string;
-    services: string[];
-  };
-  // Consumer-specific fields
-  consumerDetails?: {
-    reportsCount: number;
-    bookingsCount: number;
-  };
-  createdAt?: string;
-  updatedAt?: string;
-}
+// User interface is now imported from types file
 
 // Define the store state interface
 interface UserState {
