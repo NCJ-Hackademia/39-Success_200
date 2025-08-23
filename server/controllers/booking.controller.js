@@ -143,9 +143,37 @@ export const createBooking = async (req, res) => {
       service,
       scheduledDate,
       totalAmount: totalAmount || 0,
+      originalAmount: totalAmount || 0,
       notes: notes || "",
+      consumerNotes: notes || "",
       status: "pending",
       paymentStatus: "pending",
+      negotiationData: {
+        isNegotiated: false,
+        priceHistory: [
+          {
+            amount: totalAmount || 0,
+            proposedBy: req.user.id,
+            proposedAt: new Date(),
+            message: "Initial booking request",
+          },
+        ],
+        scheduleHistory: [
+          {
+            scheduledDate: new Date(scheduledDate),
+            proposedBy: req.user.id,
+            proposedAt: new Date(),
+            reason: "Initial booking request",
+          },
+        ],
+        requirementHistory: [
+          {
+            requirements: notes || "",
+            proposedBy: req.user.id,
+            proposedAt: new Date(),
+          },
+        ],
+      },
     };
 
     // Only add issue if provided
@@ -198,11 +226,13 @@ export const updateBooking = async (req, res) => {
 
     // Validate status transitions
     const allowedTransitions = {
-      pending: ["confirmed", "cancelled"],
+      pending: ["negotiating", "confirmed", "cancelled", "rejected"],
+      negotiating: ["confirmed", "cancelled", "rejected"],
       confirmed: ["in_progress", "cancelled"],
       in_progress: ["completed", "cancelled"],
       completed: [],
       cancelled: [],
+      rejected: [],
     };
 
     if (

@@ -647,4 +647,168 @@ export const categoriesAPI = {
   },
 };
 
+// Chat API functions
+export const chatAPI = {
+  // Get or create chat room for a booking
+  getOrCreateChatRoom: async (bookingId: string): Promise<ApiResponse<any>> => {
+    const response = await api.get<ApiResponse<any>>(
+      `/api/chat/booking/${bookingId}`
+    );
+    return response.data;
+  },
+
+  // Get messages for a chat room
+  getChatMessages: async (
+    chatRoomId: string,
+    page = 1,
+    limit = 50
+  ): Promise<ApiResponse<any[]>> => {
+    const response = await api.get<ApiResponse<any[]>>(
+      `/api/chat/${chatRoomId}/messages`,
+      {
+        params: { page, limit },
+      }
+    );
+    return response.data;
+  },
+
+  // Send a message
+  sendMessage: async (
+    chatRoomId: string,
+    messageData: any
+  ): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      `/api/chat/${chatRoomId}/messages`,
+      messageData
+    );
+    return response.data;
+  },
+
+  // Send price offer
+  sendPriceOffer: async (
+    chatRoomId: string,
+    offerData: any
+  ): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      `/api/chat/${chatRoomId}/price-offer`,
+      offerData
+    );
+    return response.data;
+  },
+
+  // Respond to price offer
+  respondToPriceOffer: async (
+    chatRoomId: string,
+    messageId: string,
+    responseData: any
+  ): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      `/api/chat/${chatRoomId}/price-offer/${messageId}/respond`,
+      responseData
+    );
+    return response.data;
+  },
+
+  // Upload file to chat
+  uploadFile: async (
+    chatRoomId: string,
+    file: File,
+    description: string
+  ): Promise<ApiResponse<any>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("description", description);
+
+    const response = await api.post<ApiResponse<any>>(
+      `/api/chat/${chatRoomId}/upload`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
+
+  // Send schedule modification
+  sendScheduleModification: async (
+    chatRoomId: string,
+    scheduleData: any
+  ): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      `/api/chat/${chatRoomId}/schedule-modification`,
+      scheduleData
+    );
+    return response.data;
+  },
+
+  // Get user's chat rooms
+  getUserChatRooms: async (): Promise<ApiResponse<any[]>> => {
+    const response = await api.get<ApiResponse<any[]>>("/api/chat/rooms");
+    return response.data;
+  },
+};
+
+// Proposals API functions
+export const proposalsAPI = {
+  // Create a new proposal
+  createProposal: async (proposalData: any): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      "/api/proposals",
+      proposalData
+    );
+    return response.data;
+  },
+
+  // Get proposals for a booking
+  getBookingProposals: async (
+    bookingId: string
+  ): Promise<ApiResponse<any[]>> => {
+    const response = await api.get<ApiResponse<any[]>>(
+      `/api/proposals/booking/${bookingId}`
+    );
+    return response.data;
+  },
+
+  // Respond to a proposal
+  respondToProposal: async (
+    proposalId: string,
+    responseData: any
+  ): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      `/api/proposals/${proposalId}/respond`,
+      responseData
+    );
+    return response.data;
+  },
+
+  // Get user proposals
+  getUserProposals: async (
+    type = "all",
+    status?: string
+  ): Promise<ApiResponse<any[]>> => {
+    const response = await api.get<ApiResponse<any[]>>("/api/proposals", {
+      params: { type, status },
+    });
+    return response.data;
+  },
+
+  // Get proposal by ID
+  getProposalById: async (proposalId: string): Promise<ApiResponse<any>> => {
+    const response = await api.get<ApiResponse<any>>(
+      `/api/proposals/${proposalId}`
+    );
+    return response.data;
+  },
+
+  // Cancel proposal
+  cancelProposal: async (proposalId: string): Promise<ApiResponse<any>> => {
+    const response = await api.delete<ApiResponse<any>>(
+      `/api/proposals/${proposalId}`
+    );
+    return response.data;
+  },
+};
+
 export default api;
