@@ -189,8 +189,8 @@ export const getConsumerBookings = async (req, res) => {
 
     const bookings = await Booking.find({ consumer: req.user.id })
       .populate("provider", "name email")
-      .populate("service", "name description price")
-      .populate("issue", "title description")
+      .populate("service", "name description price category")
+      .populate("issue", "title description location")
       .sort({ createdAt: -1 });
 
     res.status(200).json({

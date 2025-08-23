@@ -58,6 +58,7 @@ interface ChatModalProps {
   onClose: () => void;
   bookingId: string;
   currentUserId: string;
+  onBookingUpdate?: () => void;
 }
 
 export default function ChatModal({
@@ -65,6 +66,7 @@ export default function ChatModal({
   onClose,
   bookingId,
   currentUserId,
+  onBookingUpdate,
 }: ChatModalProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -209,6 +211,11 @@ export default function ChatModal({
         message: `Price offer ${action}ed!`,
         duration: 3000,
       });
+
+      // Call booking update callback if price offer was accepted
+      if (action === "accept" && onBookingUpdate) {
+        onBookingUpdate();
+      }
     } catch (error: any) {
       console.error("Error responding to price offer:", error);
       addToast({

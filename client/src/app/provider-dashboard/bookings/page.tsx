@@ -30,7 +30,7 @@ import {
 
 interface Booking {
   _id: string;
-  issue: {
+  issue?: {
     _id: string;
     title: string;
     description: string;
@@ -38,18 +38,18 @@ interface Booking {
       address: string;
     };
   };
-  consumer: {
+  consumer?: {
     _id: string;
     name: string;
     email: string;
     phone?: string;
   };
-  provider: {
+  provider?: {
     _id: string;
     name: string;
     email: string;
   };
-  service: {
+  service?: {
     _id: string;
     name: string;
     description: string;
@@ -279,10 +279,15 @@ export default function ProviderBookingsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {booking.issue.title}
+                          {booking.issue
+                            ? booking.issue.title
+                            : booking.service?.name || "Service Booking"}
                         </CardTitle>
                         <CardDescription className="mt-2">
-                          {booking.issue.description}
+                          {booking.issue
+                            ? booking.issue.description
+                            : booking.service?.description ||
+                              "No description available"}
                         </CardDescription>
                       </div>
                       <div className="flex flex-col space-y-2 ml-4">
@@ -308,9 +313,13 @@ export default function ProviderBookingsPage() {
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <User className="h-4 w-4" />
                         <div>
-                          <p className="font-medium">{booking.consumer.name}</p>
-                          <p className="text-xs">{booking.consumer.email}</p>
-                          {booking.consumer.phone && (
+                          <p className="font-medium">
+                            {booking.consumer?.name || "Unknown Customer"}
+                          </p>
+                          <p className="text-xs">
+                            {booking.consumer?.email || "No email"}
+                          </p>
+                          {booking.consumer?.phone && (
                             <p className="text-xs">{booking.consumer.phone}</p>
                           )}
                         </div>
@@ -318,7 +327,8 @@ export default function ProviderBookingsPage() {
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <MapPin className="h-4 w-4" />
                         <span className="truncate">
-                          {booking.issue.location.address}
+                          {booking.issue?.location?.address ||
+                            "Location not specified"}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -339,9 +349,11 @@ export default function ProviderBookingsPage() {
                       </h4>
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">
-                          {booking.service.name}
+                          {booking.service?.name || "Unknown Service"}
                         </span>{" "}
-                        - {booking.service.description}
+                        -{" "}
+                        {booking.service?.description ||
+                          "No description available"}
                       </p>
                     </div>
 
@@ -462,6 +474,7 @@ export default function ProviderBookingsPage() {
           onClose={closeChat}
           bookingId={selectedBookingId}
           currentUserId={user.id}
+          onBookingUpdate={fetchProviderBookings}
         />
       )}
     </ProtectedRoute>

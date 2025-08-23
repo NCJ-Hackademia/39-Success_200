@@ -3,17 +3,11 @@
 import { ProtectedRoute } from "../../../components/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { servicesAPI, categoriesAPI } from "../../../lib/api";
 import type { Service, User } from "../../../types";
+import SimpleServiceCard from "./simple-card";
 import {
   Search,
   Filter,
@@ -194,80 +188,12 @@ export default function ConsumerServicesPage() {
           {filteredServices.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.map((service) => (
-                <Card
+                <SimpleServiceCard
                   key={service.id || service._id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleServiceClick(service.id || service._id)}
-                >
-                  <CardHeader className="">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg font-semibold">
-                          {service.name}
-                        </CardTitle>
-                        <CardDescription className="text-sm text-blue-600 font-medium">
-                          {service.category}
-                        </CardDescription>
-                      </div>
-                      {service.available && (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                      {service.description}
-                    </p>
-
-                    {/* Provider Info */}
-                    {service.provider &&
-                      typeof service.provider === "object" && (
-                        <div className="flex items-center mb-3">
-                          <Users className="h-4 w-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-600 dark:text-gray-300">
-                            {service.provider.name}
-                          </span>
-                        </div>
-                      )}
-
-                    {/* Price */}
-                    <div className="flex items-center mb-4">
-                      <DollarSign className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-lg font-semibold text-green-600">
-                        ${service.price}
-                      </span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleServiceClick(service.id || service._id);
-                        }}
-                      >
-                        <BookOpen className="h-3 w-3 mr-1" />
-                        Details
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="flex-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBookService(service.id || service._id);
-                        }}
-                        disabled={!service.available}
-                      >
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Book Now
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  service={service}
+                  onViewDetails={handleServiceClick}
+                  onBookService={handleBookService}
+                />
               ))}
             </div>
           ) : (

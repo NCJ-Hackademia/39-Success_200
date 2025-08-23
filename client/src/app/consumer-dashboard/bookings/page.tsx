@@ -150,9 +150,15 @@ const ConsumerBookings = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold mb-2">
-                    {booking.title}
+                    {booking.service?.name ||
+                      booking.issue?.title ||
+                      "Service Booking"}
                   </h3>
-                  <p className="text-gray-600 mb-3">{booking.description}</p>
+                  <p className="text-gray-600 mb-3">
+                    {booking.service?.description ||
+                      booking.issue?.description ||
+                      "No description available"}
+                  </p>
                 </div>
                 <div className="ml-4">{getStatusBadge(booking.status)}</div>
               </div>
@@ -166,7 +172,9 @@ const ConsumerBookings = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Category</p>
-                  <p className="font-medium">{booking.category}</p>
+                  <p className="font-medium">
+                    {booking.service?.category || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Scheduled Date</p>
@@ -211,10 +219,12 @@ const ConsumerBookings = () => {
                 </div>
               </div>
 
-              {booking.location && (
+              {booking.issue?.location?.address && (
                 <div className="mb-4">
                   <p className="text-sm text-gray-500">Location</p>
-                  <p className="font-medium">{booking.location.address}</p>
+                  <p className="font-medium">
+                    {booking.issue.location.address}
+                  </p>
                 </div>
               )}
 

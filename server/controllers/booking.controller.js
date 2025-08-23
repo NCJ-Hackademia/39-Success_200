@@ -27,7 +27,13 @@ export const getAllBookings = async (req, res) => {
 
     // Status filter
     if (req.query.status) {
-      filter.status = req.query.status;
+      // Handle comma-separated status values
+      const statusArray = req.query.status.split(",").map((s) => s.trim());
+      if (statusArray.length > 1) {
+        filter.status = { $in: statusArray };
+      } else {
+        filter.status = req.query.status;
+      }
     }
 
     // Get total count for pagination
@@ -36,11 +42,19 @@ export const getAllBookings = async (req, res) => {
     const bookings = await Booking.find(filter)
       .populate("consumer", "name email phone")
       .populate("provider", "name email phone")
-      .populate("service", "name description price")
+      .populate("service", "name description price category")
       .populate("issue", "title description location")
       .sort(sort)
       .skip(skip)
       .limit(limit);
+
+    // Debug logging to check for null populated fields
+    console.log("Fetched bookings count:", bookings.length);
+    bookings.forEach((booking, index) => {
+      if (!booking.consumer) console.log(`Booking ${index}: Missing consumer`);
+      if (!booking.provider) console.log(`Booking ${index}: Missing provider`);
+      if (!booking.service) console.log(`Booking ${index}: Missing service`);
+    });
 
     const totalPages = Math.ceil(total / limit);
     const hasNextPage = page < totalPages;
@@ -68,7 +82,7 @@ export const getBookingById = async (req, res) => {
     const booking = await Booking.findById(req.params.id)
       .populate("consumer", "name email phone")
       .populate("provider", "name email phone")
-      .populate("service", "name description price")
+      .populate("service", "name description price category")
       .populate("issue", "title description location");
 
     if (!booking) {

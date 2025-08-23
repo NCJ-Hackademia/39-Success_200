@@ -234,7 +234,7 @@ export const sendPriceOffer = async (req, res) => {
       offeredBy: req.user.id,
       amount: parseFloat(amount),
       message: description || "",
-      timestamp: new Date(),
+      timestamp: message.createdAt, // Use the message's createdAt timestamp
       status: "pending",
     });
 
@@ -263,25 +263,79 @@ export const respondToPriceOffer = async (req, res) => {
     const { chatRoomId, messageId } = req.params;
     const { action, message: responseMessage } = req.body; // action: 'accept' or 'reject'
 
+    console.log("=== PRICE OFFER RESPONSE START ===");
+    console.log("ChatRoomId:", chatRoomId);
+    console.log("MessageId:", messageId);
+    console.log("Action:", action);
+    console.log("User ID:", req.user.id);
+
     // Verify access
     const chatRoom = await ChatRoom.findById(chatRoomId);
     if (!chatRoom || !chatRoom.participants.includes(req.user.id)) {
+      console.log("Access denied - ChatRoom not found or user not participant");
       return res.status(403).json({ message: "Access denied" });
     }
+
+    console.log("ChatRoom found:", {
+      id: chatRoom._id,
+      bookingId: chatRoom.bookingId,
+      participants: chatRoom.participants,
+      hasNegotiationData: !!chatRoom.negotiationData,
+      counterOffersCount: chatRoom.negotiationData?.counterOffers?.length || 0,
+    });
 
     // Find the price offer message
     const priceOfferMessage = await Message.findById(messageId);
     if (!priceOfferMessage || priceOfferMessage.messageType !== "price_offer") {
+      console.log("Price offer message not found or wrong type");
       return res.status(404).json({ message: "Price offer not found" });
     }
 
+    console.log("Price offer message found:", {
+      id: priceOfferMessage._id,
+      messageType: priceOfferMessage.messageType,
+      createdAt: priceOfferMessage.createdAt,
+      content: priceOfferMessage.content,
+    });
+
     // Update the offer status in negotiation data
-    const offerIndex = chatRoom.negotiationData.counterOffers.findIndex(
+    let offerIndex = chatRoom.negotiationData.counterOffers.findIndex(
       (offer) =>
         offer.timestamp.getTime() === priceOfferMessage.createdAt.getTime()
     );
 
+    console.log(
+      "Looking for offer with timestamp:",
+      priceOfferMessage.createdAt.getTime()
+    );
+    console.log("Available offers:");
+    chatRoom.negotiationData.counterOffers.forEach((offer, index) => {
+      console.log(`  Offer ${index}:`, {
+        timestamp: offer.timestamp.getTime(),
+        amount: offer.amount,
+        status: offer.status,
+      });
+    });
+    console.log("Found offer index:", offerIndex);
+
+    // If not found by timestamp, try to find by amount and pending status (fallback)
+    if (offerIndex === -1 && priceOfferMessage.content?.priceOffer?.amount) {
+      console.log(
+        "Timestamp match failed, trying fallback search by amount..."
+      );
+      offerIndex = chatRoom.negotiationData.counterOffers.findIndex(
+        (offer) =>
+          offer.amount === priceOfferMessage.content.priceOffer.amount &&
+          offer.status === "pending"
+      );
+      console.log("Fallback search found offer index:", offerIndex);
+    }
+
     if (offerIndex !== -1) {
+      console.log(
+        "Updating offer status to:",
+        action === "accept" ? "accepted" : "rejected"
+      );
       chatRoom.negotiationData.counterOffers[offerIndex].status =
         action === "accept" ? "accepted" : "rejected";
 
@@ -290,16 +344,69 @@ export const respondToPriceOffer = async (req, res) => {
           chatRoom.negotiationData.counterOffers[offerIndex].amount;
         chatRoom.negotiationData.priceNegotiated = true;
 
-        // Update booking with negotiated price
-        await Booking.findByIdAndUpdate(chatRoom.bookingId, {
-          negotiatedAmount: chatRoom.negotiationData.agreedPrice,
-          totalAmount: chatRoom.negotiationData.agreedPrice,
-          status: "confirmed",
-          "negotiationData.isNegotiated": true,
+        console.log("Updating booking with price offer acceptance:", {
+          bookingId: chatRoom.bookingId,
+          agreedPrice: chatRoom.negotiationData.agreedPrice,
+          originalStatus: "pending",
+          newStatus: "confirmed",
         });
+
+        try {
+          // First check if booking exists
+          const existingBooking = await Booking.findById(chatRoom.bookingId);
+          if (!existingBooking) {
+            console.error("Booking not found with ID:", chatRoom.bookingId);
+            return res.status(404).json({ message: "Booking not found" });
+          }
+
+          console.log("Found existing booking:", {
+            id: existingBooking._id,
+            currentStatus: existingBooking.status,
+            currentTotalAmount: existingBooking.totalAmount,
+            currentNegotiatedAmount: existingBooking.negotiatedAmount,
+          });
+
+          // Update booking with negotiated price
+          const updatedBooking = await Booking.findByIdAndUpdate(
+            chatRoom.bookingId,
+            {
+              negotiatedAmount: chatRoom.negotiationData.agreedPrice,
+              totalAmount: chatRoom.negotiationData.agreedPrice,
+              status: "confirmed",
+              "negotiationData.isNegotiated": true,
+            },
+            { new: true }
+          );
+
+          console.log("Booking updated successfully:", {
+            id: updatedBooking._id,
+            newStatus: updatedBooking.status,
+            newTotalAmount: updatedBooking.totalAmount,
+            newNegotiatedAmount: updatedBooking.negotiatedAmount,
+            isNegotiated: updatedBooking.negotiationData?.isNegotiated,
+          });
+        } catch (bookingUpdateError) {
+          console.error("Error updating booking:", bookingUpdateError);
+          return res.status(500).json({ message: "Failed to update booking" });
+        }
       }
 
       await chatRoom.save();
+    } else {
+      console.log("ERROR: Could not find the price offer in negotiation data");
+      return res.status(404).json({
+        message: "Price offer not found in negotiation data",
+        debug: {
+          chatRoomId: chatRoom._id,
+          messageId: messageId,
+          messageTimestamp: priceOfferMessage.createdAt.getTime(),
+          availableOffers: chatRoom.negotiationData.counterOffers.map((o) => ({
+            timestamp: o.timestamp.getTime(),
+            amount: o.amount,
+            status: o.status,
+          })),
+        },
+      });
     }
 
     // Send response message
