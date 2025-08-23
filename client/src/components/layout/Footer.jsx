@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth, useUserRole } from "@/store/userStore";
+import { useAuth, useUserRole } from "../../store/userStore";
 import {
   Mail,
   Phone,

@@ -361,15 +361,17 @@ export interface PaginationParams {
 export interface LoginForm {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterForm {
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   password: string;
   confirmPassword: string;
-  role: "consumer" | "provider";
+  userType: "admin" | "user";
+  role: "consumer" | "provider"; // Only applicable when userType is "user"
   location?: Location;
   providerCategory?: string; // For providers
 }

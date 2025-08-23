@@ -1,7 +1,7 @@
 import "./globals.css";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 
 export const metadata = {
   title: "HACKADEMIA - Digital Citizen Helpdesk",

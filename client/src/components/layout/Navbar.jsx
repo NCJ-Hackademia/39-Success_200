@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, useUserActions, useUserRole } from "@/store/userStore";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
-import ClientOnly from "@/components/ClientOnly";
+import { useAuth, useUserActions, useUserRole } from "../../store/userStore";
+import { useTheme } from "../../contexts/ThemeContext";
+import { Button } from "../ui/button";
+import ClientOnly from "../ClientOnly";
 import {
   Menu,
   X,

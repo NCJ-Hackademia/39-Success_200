@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, useUserRole, initializeAuth } from "@/store/userStore";
+import { useAuth, useUserRole, initializeAuth } from "../store/userStore";
 
 // Loading component
 const DefaultLoader = () => (
