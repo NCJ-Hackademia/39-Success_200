@@ -6,7 +6,7 @@ import serviceRoutes from "./routes/service.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import consumerRoutes from "./routes/consumer.routes.js";
 import providerRoutes from "./routes/provider.routes.js";
-import adminRoutes from "./routes/admin.routes.js";
+// import adminRoutes from "./routes/admin.routes.js";
 import morgan from "morgan";
 
 const app = express();
@@ -24,7 +24,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/consumer", consumerRoutes);
 app.use("/api/provider", providerRoutes);
-app.use("/api/admin", adminRoutes);
+// app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/", (req, res) => {

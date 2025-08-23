@@ -14,6 +14,7 @@ import {
 } from "../../components/ui/card";
 import { useUserActions } from "../../store/userStore";
 import { authAPI } from "../../lib/api";
+import useAuth from "../../hooks/useAuth";
 import {
   Eye,
   EyeOff,
@@ -39,7 +40,7 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setAuth } = useUserActions();
+  const auth = useAuth();
 
   const [formData, setFormData] = useState({
     // Basic Information
@@ -78,7 +79,6 @@ export default function RegisterPage() {
   });
 
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showAdminDropdown, setShowAdminDropdown] = useState(false);
@@ -230,45 +230,23 @@ export default function RegisterPage() {
       return;
     }
 
-    setIsLoading(true);
     setErrors({});
 
-    try {
-      // Call the actual API
-      const response = await authAPI.register({
-        name: formData.name.trim(),
-        email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.trim(),
-        password: formData.password,
-        role: formData.userType === "admin" ? "admin" : formData.role,
-      });
+    const result = await auth.register({
+      name: formData.name.trim(),
+      email: formData.email.toLowerCase().trim(),
+      phone: formData.phone.trim(),
+      password: formData.password,
+      role: formData.userType === "admin" ? "admin" : formData.role,
+    });
 
-      // Store user data and token
-      setAuth(response.user, response.token);
-
-      // Store token in localStorage for persistence
-      if (typeof window !== "undefined") {
-        localStorage.setItem("authToken", response.token);
-      }
-
-      // Redirect based on role
-      let redirectPath = "/dashboard"; // default for consumer
-      if (response.user.role === "provider") {
-        redirectPath = "/provider-dashboard";
-      } else if (response.user.role === "admin") {
-        redirectPath = "/admin-dashboard";
-      }
-      router.push(redirectPath);
-    } catch (error) {
-      console.error("Registration error:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        "Registration failed. Please try again.";
+    if (result.success) {
+      // Redirect to appropriate dashboard
+      router.push(result.redirectPath);
+    } else {
       setErrors({
-        general: errorMessage,
+        general: result.error,
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 

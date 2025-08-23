@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, useUserActions, useUserRole } from "../../store/userStore";
+import { useUserActions, useUserRole } from "../../store/userStore";
+import useAuth from "../../hooks/useAuth";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Button } from "../ui/button";
 import ClientOnly from "../ClientOnly";
@@ -27,14 +28,16 @@ const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const router = useRouter();
 
-  const { user, isAuthenticated } = useAuth();
-  const { clearAuth } = useUserActions();
-  const { isAdmin, isConsumer, isProvider } = useUserRole();
+  const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
-    clearAuth();
-    router.push("/");
+    // Use the enhanced auth logout function
+    auth.logout();
+    
+    // Close any open dropdowns
+    setIsProfileOpen(false);
+    setIsMenuOpen(false);
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);

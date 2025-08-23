@@ -117,7 +117,18 @@ export const useUserStore = create<UserState>()(
 // Utility hooks for common use cases
 export const useAuth = () => {
   const { user, token, isAuthenticated, isLoading } = useUserStore();
-  return { user, token, isAuthenticated, isLoading };
+  const userRole = user?.role || null;
+  
+  return { 
+    user, 
+    token, 
+    isAuthenticated, 
+    isLoading, 
+    userRole,
+    // Convenience methods
+    isLoggedIn: isAuthenticated,
+    hasRole: (role: string) => userRole === role,
+  };
 };
 
 export const useUserActions = () => {
