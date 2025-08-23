@@ -35,9 +35,11 @@ interface ProviderDashboardStats {
   totalReviews: number;
   isVerified: boolean;
   completionRate: number;
+  assignedIssues: number;
 }
 
 export default function ProviderDashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<ProviderDashboardStats>({
     totalBookings: 0,
     completedBookings: 0,
@@ -49,6 +51,7 @@ export default function ProviderDashboardPage() {
     totalReviews: 0,
     isVerified: false,
     completionRate: 0,
+    assignedIssues: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +73,7 @@ export default function ProviderDashboardPage() {
           ...providerStats,
           isVerified: profile.verification?.isVerified || false,
           totalReviews: providerStats.completedBookings, // Assuming each completed booking has a review
+          assignedIssues: 0, // TODO: Fetch from API
         });
       } catch (profileError) {
         console.warn("Could not fetch provider profile:", profileError);
@@ -78,6 +82,7 @@ export default function ProviderDashboardPage() {
           ...providerStats,
           isVerified: false,
           totalReviews: providerStats.completedBookings,
+          assignedIssues: 0, // TODO: Fetch from API
         });
       }
     } catch (err: any) {
@@ -204,11 +209,35 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Pending Bookings Card */}
-            <Card className="hover:shadow-lg transition-shadow">
+            {/* Assigned Issues Card */}
+            <Card
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => router.push("/provider-dashboard/issues")}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Pending Jobs
+                  Assigned Issues
+                </CardTitle>
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              </CardHeader>
+              <CardContent className="">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.assignedIssues || 0}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Issues to handle
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Pending Bookings Card */}
+            <Card
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => router.push("/provider-dashboard/bookings")}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  Pending Bookings
                 </CardTitle>
                 <Clock className="h-4 w-4 text-orange-600" />
               </CardHeader>
@@ -217,7 +246,7 @@ export default function ProviderDashboardPage() {
                   {stats.pendingBookings}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Awaiting completion
+                  Awaiting response
                 </p>
               </CardContent>
             </Card>
