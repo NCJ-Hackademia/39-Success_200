@@ -21,3 +21,21 @@ export const authenticate = (roles = []) => {
     }
   };
 };
+
+// Optional authentication - sets req.user if token is provided, but doesn't fail if not
+export const optionalAuthenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // No token provided, continue without setting req.user
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+  } catch (err) {
+    // Invalid token, but don't fail - just continue without setting req.user
+  }
+  next();
+};

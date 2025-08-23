@@ -6,12 +6,12 @@ import {
   updateService,
   deleteService,
 } from "../controllers/service.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, optionalAuthenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Get all services (public)
-router.get("/", getAllServices);
+// Get all services (public, but with optional authentication for "current" provider filter)
+router.get("/", optionalAuthenticate, getAllServices);
 
 // Get service by ID (public)
 router.get("/:id", getServiceById);
