@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import ReportIssue from "./ReportIssue";
 import IssuesListInfinite from "./IssuesListInfinite";
 import { Button } from "../ui/button";
@@ -9,6 +10,7 @@ import { useUserStore } from "../../store/userStore";
 const IssuesPage = () => {
   const [activeTab, setActiveTab] = useState("list");
   const [refreshList, setRefreshList] = useState(false);
+  const router = useRouter();
 
   const { user } = useUserStore();
 
@@ -16,6 +18,11 @@ const IssuesPage = () => {
     // Switch to list view and refresh the list
     setActiveTab("list");
     setRefreshList((prev) => !prev);
+  };
+
+  const handleReportIssue = () => {
+    // Navigate to map page with report mode
+    router.push("/map?mode=report");
   };
 
   const isConsumer = user?.role === "consumer";
@@ -42,7 +49,7 @@ const IssuesPage = () => {
               My Issues
             </Button>
             <Button
-              onClick={() => setActiveTab("report")}
+              onClick={handleReportIssue}
               variant={activeTab === "report" ? "default" : "ghost"}
               className="mb-2"
             >
@@ -69,17 +76,13 @@ const IssuesPage = () => {
             useInfiniteScrolling={true}
           />
         )}
-
-        {activeTab === "report" && isConsumer && (
-          <ReportIssue onIssueCreated={handleIssueCreated} />
-        )}
       </div>
 
       {/* Quick Actions */}
-      {isConsumer && activeTab !== "report" && (
+      {isConsumer && (
         <div className="fixed bottom-6 right-6">
           <Button
-            onClick={() => setActiveTab("report")}
+            onClick={handleReportIssue}
             className="rounded-full w-14 h-14 shadow-lg"
             size="lg"
           >

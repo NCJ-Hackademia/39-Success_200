@@ -7,8 +7,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { issuesAPI } from "../../lib/api";
+import { issuesAPI, categoriesAPI } from "../../lib/api";
 import { createSimpleIcon } from "../../lib/leafletUtils";
+
+// Default categories as fallback
+const defaultCategories = [
+  { _id: "pothole", name: "Pothole", description: "Road potholes and damages" },
+  { _id: "garbage", name: "Garbage", description: "Garbage collection issues" },
+  {
+    _id: "streetlight",
+    name: "Street Light",
+    description: "Street lighting problems",
+  },
+  {
+    _id: "water_supply",
+    name: "Water Supply",
+    description: "Water supply issues",
+  },
+  {
+    _id: "drainage",
+    name: "Drainage",
+    description: "Drainage and sewage problems",
+  },
+  { _id: "electrical", name: "Electrical", description: "Electrical issues" },
+  { _id: "plumbing", name: "Plumbing", description: "Plumbing issues" },
+  { _id: "other", name: "Other", description: "Other civic issues" },
+];
 
 interface IssueReportMapProps {
   onIssueSubmitted?: (issue: any) => void;
@@ -28,23 +52,31 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
     category: "",
     images: [] as File[],
   });
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>(
     initialLocation || [12.9716, 77.5946] // Default to Bangalore
   );
 
-  const categories = [
-    "pothole",
-    "garbage",
-    "streetlight",
-    "water_supply",
-    "drainage",
-    "road_damage",
-    "electrical",
-    "plumbing",
-    "other",
-  ];
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoriesAPI.getCategories();
+        if (response.data && Array.isArray(response.data)) {
+          setCategories(response.data);
+        } else {
+          setCategories(defaultCategories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setCategories(defaultCategories);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -280,10 +312,14 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
               >
                 <option value="">Select a category</option>
                 {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category
-                      .replace("_", " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
+                  <option
+                    key={category._id || category}
+                    value={category._id || category}
+                  >
+                    {category.name ||
+                      category
+                        .replace("_", " ")
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                   </option>
                 ))}
               </select>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -9,7 +10,14 @@ import {
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { MapPin, List, Plus, Navigation, Loader2 } from "lucide-react";
+import {
+  MapPin,
+  List,
+  Plus,
+  Navigation,
+  Loader2,
+  ArrowLeft,
+} from "lucide-react";
 import { Service, Issue, IssueStatus, IssuePriority } from "../../types";
 import Map from "../../components/map/Map";
 import ServicesMap from "../../components/map/ServicesMap";
@@ -17,9 +25,13 @@ import IssuesMap from "../../components/map/IssuesMap";
 import IssueReportMap from "../../components/map/IssueReportMap";
 
 const MapDemo: React.FC = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const mode = searchParams.get("mode");
+
   const [activeDemo, setActiveDemo] = useState<
     "basic" | "services" | "issues" | "report"
-  >("basic");
+  >(mode === "report" ? "report" : "basic");
   const [userLocation, setUserLocation] = useState<[number, number]>([
     12.9716, 77.5946,
   ]);
@@ -27,6 +39,17 @@ const MapDemo: React.FC = () => {
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [manualLocation, setManualLocation] = useState({ lat: "", lng: "" });
   const [showManualInput, setShowManualInput] = useState(false);
+
+  // Effect to handle mode changes from URL
+  useEffect(() => {
+    if (mode === "report") {
+      setActiveDemo("report");
+    }
+  }, [mode]);
+
+  const handleBackToIssues = () => {
+    router.push("/consumer-dashboard/issues");
+  };
 
   const getUserLocation = () => {
     if (!navigator.geolocation) {
@@ -287,176 +310,196 @@ const MapDemo: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
+          {mode === "report" && (
+            <div className="flex items-center mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center space-x-2"
+                onClick={handleBackToIssues}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Issues</span>
+              </Button>
+            </div>
+          )}
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Interactive Map Features Demo
+            {mode === "report"
+              ? "Report an Issue"
+              : "Interactive Map Features Demo"}
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Explore our comprehensive map integration for services, issues, and
-            location-based features
+            {mode === "report"
+              ? "Click on the map to select a location and report an issue in your community"
+              : "Explore our comprehensive map integration for services, issues, and location-based features"}
           </p>
         </div>
 
-        {/* Navigation */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  variant={activeDemo === "basic" ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center space-x-2"
-                  onClick={() => handleDemoChange("basic")}
-                >
-                  <MapPin className="w-4 h-4" />
-                  <span>Basic Map</span>
-                </Button>
-                <Button
-                  variant={activeDemo === "services" ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center space-x-2"
-                  onClick={() => handleDemoChange("services")}
-                >
-                  <Navigation className="w-4 h-4" />
-                  <span>Services Map</span>
-                </Button>
-                <Button
-                  variant={activeDemo === "issues" ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center space-x-2"
-                  onClick={() => handleDemoChange("issues")}
-                >
-                  <List className="w-4 h-4" />
-                  <span>Issues Map</span>
-                </Button>
-                <Button
-                  variant={activeDemo === "report" ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center space-x-2"
-                  onClick={() => handleDemoChange("report")}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Report Issue</span>
-                </Button>
-              </div>
-
-              {/* Location Buttons */}
-              <div className="flex flex-col space-y-2">
-                <div className="flex space-x-2">
+        {/* Navigation - Hidden in report mode */}
+        {mode !== "report" && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap gap-4 items-center justify-between">
+                <div className="flex flex-wrap gap-4">
                   <Button
-                    variant="outline"
+                    variant={activeDemo === "basic" ? "default" : "outline"}
                     size="sm"
                     className="flex items-center space-x-2"
-                    onClick={getUserLocation}
-                    disabled={locationLoading}
+                    onClick={() => handleDemoChange("basic")}
                   >
-                    {locationLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Navigation className="w-4 h-4" />
-                    )}
-                    <span>
-                      {locationLoading ? "Getting Location..." : "My Location"}
-                    </span>
+                    <MapPin className="w-4 h-4" />
+                    <span>Basic Map</span>
                   </Button>
-
                   <Button
-                    variant="outline"
+                    variant={activeDemo === "services" ? "default" : "outline"}
                     size="sm"
                     className="flex items-center space-x-2"
-                    onClick={getHighAccuracyLocation}
-                    disabled={locationLoading}
+                    onClick={() => handleDemoChange("services")}
                   >
-                    {locationLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <MapPin className="w-4 h-4" />
-                    )}
-                    <span>High Accuracy</span>
+                    <Navigation className="w-4 h-4" />
+                    <span>Services Map</span>
                   </Button>
-
                   <Button
-                    variant="outline"
+                    variant={activeDemo === "issues" ? "default" : "outline"}
                     size="sm"
-                    className=""
-                    onClick={() => setShowManualInput(!showManualInput)}
+                    className="flex items-center space-x-2"
+                    onClick={() => handleDemoChange("issues")}
                   >
-                    Manual
+                    <List className="w-4 h-4" />
+                    <span>Issues Map</span>
+                  </Button>
+                  <Button
+                    variant={activeDemo === "report" ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center space-x-2"
+                    onClick={() => handleDemoChange("report")}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Report Issue</span>
                   </Button>
                 </div>
 
-                {/* Manual Location Input */}
-                {showManualInput && (
-                  <div className="space-y-2">
-                    <div className="flex space-x-2 p-2 bg-gray-50 rounded">
-                      <Input
-                        type="text"
-                        placeholder="Latitude"
-                        value={manualLocation.lat}
-                        onChange={(e) =>
-                          setManualLocation({
-                            ...manualLocation,
-                            lat: e.target.value,
-                          })
-                        }
-                        className="w-24 h-8 text-xs"
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Longitude"
-                        value={manualLocation.lng}
-                        onChange={(e) =>
-                          setManualLocation({
-                            ...manualLocation,
-                            lng: e.target.value,
-                          })
-                        }
-                        className="w-24 h-8 text-xs"
-                      />
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={setManualLocationHandler}
-                        className="h-8 text-xs"
-                      >
-                        Set
-                      </Button>
-                    </div>
+                {/* Location Buttons */}
+                <div className="flex flex-col space-y-2">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center space-x-2"
+                      onClick={getUserLocation}
+                      disabled={locationLoading}
+                    >
+                      {locationLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Navigation className="w-4 h-4" />
+                      )}
+                      <span>
+                        {locationLoading
+                          ? "Getting Location..."
+                          : "My Location"}
+                      </span>
+                    </Button>
 
-                    {/* Preset Locations */}
-                    <div className="flex flex-wrap gap-1">
-                      {presetLocations.map((location) => (
-                        <Button
-                          key={location.name}
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setPresetLocation(
-                              location.coords as [number, number]
-                            )
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center space-x-2"
+                      onClick={getHighAccuracyLocation}
+                      disabled={locationLoading}
+                    >
+                      {locationLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <MapPin className="w-4 h-4" />
+                      )}
+                      <span>High Accuracy</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className=""
+                      onClick={() => setShowManualInput(!showManualInput)}
+                    >
+                      Manual
+                    </Button>
+                  </div>
+
+                  {/* Manual Location Input */}
+                  {showManualInput && (
+                    <div className="space-y-2">
+                      <div className="flex space-x-2 p-2 bg-gray-50 rounded">
+                        <Input
+                          type="text"
+                          placeholder="Latitude"
+                          value={manualLocation.lat}
+                          onChange={(e) =>
+                            setManualLocation({
+                              ...manualLocation,
+                              lat: e.target.value,
+                            })
                           }
-                          className="h-6 text-xs px-2"
+                          className="w-24 h-8 text-xs"
+                        />
+                        <Input
+                          type="text"
+                          placeholder="Longitude"
+                          value={manualLocation.lng}
+                          onChange={(e) =>
+                            setManualLocation({
+                              ...manualLocation,
+                              lng: e.target.value,
+                            })
+                          }
+                          className="w-24 h-8 text-xs"
+                        />
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={setManualLocationHandler}
+                          className="h-8 text-xs"
                         >
-                          {location.name}
+                          Set
                         </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
 
-                {/* Location Info */}
-                <div className="text-xs text-gray-600">
-                  <div>
-                    Lat: {userLocation[0].toFixed(6)}, Lng:{" "}
-                    {userLocation[1].toFixed(6)}
-                  </div>
-                  {locationAccuracy && (
-                    <div>Accuracy: ±{Math.round(locationAccuracy)}m</div>
+                      {/* Preset Locations */}
+                      <div className="flex flex-wrap gap-1">
+                        {presetLocations.map((location) => (
+                          <Button
+                            key={location.name}
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setPresetLocation(
+                                location.coords as [number, number]
+                              )
+                            }
+                            className="h-6 text-xs px-2"
+                          >
+                            {location.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   )}
+
+                  {/* Location Info */}
+                  <div className="text-xs text-gray-600">
+                    <div>
+                      Lat: {userLocation[0].toFixed(6)}, Lng:{" "}
+                      {userLocation[1].toFixed(6)}
+                    </div>
+                    {locationAccuracy && (
+                      <div>Accuracy: ±{Math.round(locationAccuracy)}m</div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Demo Content */}
         <Card className="">
@@ -535,7 +578,15 @@ const MapDemo: React.FC = () => {
                 <IssueReportMap
                   initialLocation={userLocation}
                   onIssueSubmitted={(issue) => {
-                    alert(`Issue reported: ${issue.title}`);
+                    if (mode === "report") {
+                      // Show success message and redirect back to issues
+                      alert(`Issue reported successfully: ${issue.title}`);
+                      setTimeout(() => {
+                        router.push("/consumer-dashboard/issues");
+                      }, 1500);
+                    } else {
+                      alert(`Issue reported: ${issue.title}`);
+                    }
                   }}
                 />
               </div>
@@ -543,56 +594,58 @@ const MapDemo: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Features Overview */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <MapPin className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold">Interactive Maps</h3>
-              </div>
-              <p className="text-sm text-gray-600">
-                Click, zoom, and explore with full interactivity
-              </p>
-            </CardContent>
-          </Card>
+        {/* Features Overview - Hidden in report mode */}
+        {mode !== "report" && (
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2 mb-2">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold">Interactive Maps</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Click, zoom, and explore with full interactivity
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Navigation className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold">Service Areas</h3>
-              </div>
-              <p className="text-sm text-gray-600">
-                Visual service coverage with radius indicators
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Navigation className="w-5 h-5 text-green-600" />
+                  <h3 className="font-semibold">Service Areas</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Visual service coverage with radius indicators
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <List className="w-5 h-5 text-orange-600" />
-                <h3 className="font-semibold">Issue Tracking</h3>
-              </div>
-              <p className="text-sm text-gray-600">
-                Real-time issue status and priority visualization
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2 mb-2">
+                  <List className="w-5 h-5 text-orange-600" />
+                  <h3 className="font-semibold">Issue Tracking</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Real-time issue status and priority visualization
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="">
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-2 mb-2">
-                <Plus className="w-5 h-5 text-purple-600" />
-                <h3 className="font-semibold">Easy Reporting</h3>
-              </div>
-              <p className="text-sm text-gray-600">
-                One-click location selection for issue reporting
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Plus className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-semibold">Easy Reporting</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  One-click location selection for issue reporting
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
