@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth, useUserActions, useUserRole } from '@/store/userStore';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Button } from '@/components/ui/button';
-import ClientOnly from '@/components/ClientOnly';
-import { 
-  Menu, 
-  X, 
-  Sun, 
-  Moon, 
-  User, 
-  Settings, 
-  LogOut, 
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth, useUserActions, useUserRole } from "@/store/userStore";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Button } from "@/components/ui/button";
+import ClientOnly from "@/components/ClientOnly";
+import {
+  Menu,
+  X,
+  Sun,
+  Moon,
+  User,
+  Settings,
+  LogOut,
   Home,
   MapPin,
   Wrench,
   Shield,
-  Bell
-} from 'lucide-react';
+  Bell,
+} from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const router = useRouter();
-  
+
   const { user, isAuthenticated } = useAuth();
   const { clearAuth } = useUserActions();
   const { isAdmin, isConsumer, isProvider } = useUserRole();
@@ -34,7 +34,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     clearAuth();
-    router.push('/');
+    router.push("/");
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -44,39 +44,47 @@ const Navbar = () => {
   const getNavItems = () => {
     if (!isAuthenticated) {
       return [
-        { href: '/', label: 'Home', icon: Home },
-        { href: '/about', label: 'About', icon: null },
-        { href: '/contact', label: 'Contact', icon: null },
+        { href: "/", label: "Home", icon: Home },
+        { href: "/about", label: "About", icon: null },
+        { href: "/contact", label: "Contact", icon: null },
       ];
     }
 
     const baseItems = [
-      { href: '/', label: 'Home', icon: Home },
-      { href: '/map', label: 'Map View', icon: MapPin },
+      { href: "/", label: "Home", icon: Home },
+      { href: "/map", label: "Map View", icon: MapPin },
     ];
 
     if (isAdmin()) {
       return [
         ...baseItems,
-        { href: '/admin', label: 'Admin Panel', icon: Shield },
-        { href: '/admin/users', label: 'Manage Users', icon: User },
-        { href: '/admin/issues', label: 'All Issues', icon: Wrench },
+        { href: "/admin", label: "Admin Panel", icon: Shield },
+        { href: "/admin/users", label: "Manage Users", icon: User },
+        { href: "/admin/issues", label: "All Issues", icon: Wrench },
       ];
     } else if (isConsumer()) {
       return [
         ...baseItems,
-        { href: '/dashboard', label: 'Dashboard', icon: User },
-        { href: '/dashboard/issues', label: 'My Issues', icon: Wrench },
-        { href: '/dashboard/bookings', label: 'My Bookings', icon: null },
-        { href: '/services', label: 'Find Services', icon: null },
+        { href: "/dashboard", label: "Dashboard", icon: User },
+        { href: "/dashboard/issues", label: "My Issues", icon: Wrench },
+        { href: "/dashboard/bookings", label: "My Bookings", icon: null },
+        { href: "/services", label: "Find Services", icon: null },
       ];
     } else if (isProvider()) {
       return [
         ...baseItems,
-        { href: '/provider-dashboard', label: 'Dashboard', icon: User },
-        { href: '/provider-dashboard/services', label: 'My Services', icon: Wrench },
-        { href: '/provider-dashboard/bookings', label: 'Bookings', icon: null },
-        { href: '/provider-dashboard/issues', label: 'Available Issues', icon: null },
+        { href: "/provider-dashboard", label: "Dashboard", icon: User },
+        {
+          href: "/provider-dashboard/services",
+          label: "My Services",
+          icon: Wrench,
+        },
+        { href: "/provider-dashboard/bookings", label: "Bookings", icon: null },
+        {
+          href: "/provider-dashboard/issues",
+          label: "Available Issues",
+          icon: null,
+        },
       ];
     }
 
@@ -128,7 +136,7 @@ const Navbar = () => {
                 onClick={toggleTheme}
                 className="w-9 h-9 p-0"
               >
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <Sun className="w-4 h-4" />
                 ) : (
                   <Moon className="w-4 h-4" />
@@ -182,7 +190,7 @@ const Navbar = () => {
                         {user?.role}
                       </span>
                     </div>
-                    
+
                     <Link
                       href="/profile"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -190,7 +198,7 @@ const Navbar = () => {
                       <User className="w-4 h-4 mr-2" />
                       Profile
                     </Link>
-                    
+
                     <Link
                       href="/settings"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -198,7 +206,7 @@ const Navbar = () => {
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Link>
-                    
+
                     <button
                       onClick={handleLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -227,7 +235,11 @@ const Navbar = () => {
               onClick={toggleMenu}
               className="md:hidden w-9 h-9 p-0"
             >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </Button>
           </div>
         </div>

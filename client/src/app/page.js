@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { 
-  MapPin, 
-  Wrench, 
-  Users, 
-  Shield, 
+import {
+  MapPin,
+  Wrench,
+  Users,
+  Shield,
   Zap,
   CheckCircle,
   ArrowRight,
-  Star
+  Star,
 } from "lucide-react";
 
 export default function Home() {
@@ -20,13 +20,17 @@ export default function Home() {
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
               Your Digital
-              <span className="text-blue-600 dark:text-blue-400"> Citizen Helpdesk</span>
+              <span className="text-blue-600 dark:text-blue-400">
+                {" "}
+                Citizen Helpdesk
+              </span>
               <br />
               for Smart Cities
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-              Connecting citizens, service providers, and municipal authorities on one unified platform. 
-              Report issues, book services, and build better communities together.
+              Connecting citizens, service providers, and municipal authorities
+              on one unified platform. Report issues, book services, and build
+              better communities together.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
@@ -36,9 +40,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link href="/map">
-                  Explore Map View
-                </Link>
+                <Link href="/map">Explore Map View</Link>
               </Button>
             </div>
           </div>
@@ -53,8 +55,8 @@ export default function Home() {
               Revolutionizing City Services
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              HACKADEMIA brings together cutting-edge technology and community collaboration 
-              to solve urban challenges efficiently.
+              HACKADEMIA brings together cutting-edge technology and community
+              collaboration to solve urban challenges efficiently.
             </p>
           </div>
 
@@ -68,8 +70,9 @@ export default function Home() {
                 GPS-Powered Issue Reporting
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Report city issues like potholes, garbage, or streetlight failures with precise GPS coordinates. 
-                Visual map integration shows all reported problems in real-time.
+                Report city issues like potholes, garbage, or streetlight
+                failures with precise GPS coordinates. Visual map integration
+                shows all reported problems in real-time.
               </p>
             </div>
 
@@ -82,8 +85,9 @@ export default function Home() {
                 Service Marketplace
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Connect with verified service providers like plumbers, electricians, and cleaners. 
-                Book services, track progress, and rate experiences seamlessly.
+                Connect with verified service providers like plumbers,
+                electricians, and cleaners. Book services, track progress, and
+                rate experiences seamlessly.
               </p>
             </div>
 
@@ -96,8 +100,9 @@ export default function Home() {
                 Community Validation
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Issues can be upvoted by community members, ensuring real problems get priority. 
-                Democratic validation system builds trust and accountability.
+                Issues can be upvoted by community members, ensuring real
+                problems get priority. Democratic validation system builds trust
+                and accountability.
               </p>
             </div>
 
@@ -110,8 +115,9 @@ export default function Home() {
                 Admin Oversight
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Municipal authorities can monitor all activities, verify providers, manage users, 
-                and ensure quality service delivery across the platform.
+                Municipal authorities can monitor all activities, verify
+                providers, manage users, and ensure quality service delivery
+                across the platform.
               </p>
             </div>
 
@@ -124,8 +130,9 @@ export default function Home() {
                 Real-time Updates
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Live status tracking from open to in-progress to resolved. Real-time chat between 
-                citizens and providers ensures smooth communication.
+                Live status tracking from open to in-progress to resolved.
+                Real-time chat between citizens and providers ensures smooth
+                communication.
               </p>
             </div>
 
@@ -138,8 +145,9 @@ export default function Home() {
                 Verified Providers
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                All service providers undergo verification by administrators. Trusted badge system 
-                ensures citizens connect with reliable, authentic service providers.
+                All service providers undergo verification by administrators.
+                Trusted badge system ensures citizens connect with reliable,
+                authentic service providers.
               </p>
             </div>
           </div>
@@ -177,19 +185,15 @@ export default function Home() {
             Ready to Transform Your City?
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-            Join thousands of citizens, service providers, and administrators 
+            Join thousands of citizens, service providers, and administrators
             already making their cities smarter and more responsive.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/register">
-                Join as Citizen
-              </Link>
+              <Link href="/register">Join as Citizen</Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <Link href="/become-provider">
-                Become a Provider
-              </Link>
+              <Link href="/become-provider">Become a Provider</Link>
             </Button>
           </div>
         </div>

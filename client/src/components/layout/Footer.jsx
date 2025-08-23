@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useAuth, useUserRole } from '@/store/userStore';
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Github, 
-  Twitter, 
+import Link from "next/link";
+import { useAuth, useUserRole } from "@/store/userStore";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Github,
+  Twitter,
   Linkedin,
   Heart,
-  ExternalLink
-} from 'lucide-react';
+  ExternalLink,
+} from "lucide-react";
 
 const Footer = () => {
   const { isAuthenticated } = useAuth();
@@ -19,55 +19,55 @@ const Footer = () => {
 
   const footerLinks = {
     platform: [
-      { label: 'About HACKADEMIA', href: '/about' },
-      { label: 'How It Works', href: '/how-it-works' },
-      { label: 'Features', href: '/features' },
-      { label: 'Pricing', href: '/pricing' },
+      { label: "About HACKADEMIA", href: "/about" },
+      { label: "How It Works", href: "/how-it-works" },
+      { label: "Features", href: "/features" },
+      { label: "Pricing", href: "/pricing" },
     ],
     services: [
-      { label: 'Report Issues', href: '/report-issue' },
-      { label: 'Find Services', href: '/services' },
-      { label: 'Become Provider', href: '/become-provider' },
-      { label: 'Map View', href: '/map' },
+      { label: "Report Issues", href: "/report-issue" },
+      { label: "Find Services", href: "/services" },
+      { label: "Become Provider", href: "/become-provider" },
+      { label: "Map View", href: "/map" },
     ],
     support: [
-      { label: 'Help Center', href: '/help' },
-      { label: 'Contact Us', href: '/contact' },
-      { label: 'FAQ', href: '/faq' },
-      { label: 'Community', href: '/community' },
+      { label: "Help Center", href: "/help" },
+      { label: "Contact Us", href: "/contact" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Community", href: "/community" },
     ],
     legal: [
-      { label: 'Privacy Policy', href: '/privacy' },
-      { label: 'Terms of Service', href: '/terms' },
-      { label: 'Cookie Policy', href: '/cookies' },
-      { label: 'Guidelines', href: '/guidelines' },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Cookie Policy", href: "/cookies" },
+      { label: "Guidelines", href: "/guidelines" },
     ],
   };
 
   // Quick actions based on user role
   const getQuickActions = () => {
     if (!isAuthenticated) return [];
-    
+
     if (isAdmin()) {
       return [
-        { label: 'Admin Dashboard', href: '/admin' },
-        { label: 'User Management', href: '/admin/users' },
-        { label: 'System Reports', href: '/admin/reports' },
+        { label: "Admin Dashboard", href: "/admin" },
+        { label: "User Management", href: "/admin/users" },
+        { label: "System Reports", href: "/admin/reports" },
       ];
     } else if (isConsumer()) {
       return [
-        { label: 'My Dashboard', href: '/dashboard' },
-        { label: 'Report New Issue', href: '/dashboard/report-issue' },
-        { label: 'Track Issues', href: '/dashboard/issues' },
+        { label: "My Dashboard", href: "/dashboard" },
+        { label: "Report New Issue", href: "/dashboard/report-issue" },
+        { label: "Track Issues", href: "/dashboard/issues" },
       ];
     } else if (isProvider()) {
       return [
-        { label: 'Provider Dashboard', href: '/provider-dashboard' },
-        { label: 'Manage Services', href: '/provider-dashboard/services' },
-        { label: 'View Bookings', href: '/provider-dashboard/bookings' },
+        { label: "Provider Dashboard", href: "/provider-dashboard" },
+        { label: "Manage Services", href: "/provider-dashboard/services" },
+        { label: "View Bookings", href: "/provider-dashboard/bookings" },
       ];
     }
-    
+
     return [];
   };
 
@@ -89,10 +89,11 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
-              Your digital citizen helpdesk for smart cities. Connecting citizens, service providers, 
-              and municipal authorities on one unified platform.
+              Your digital citizen helpdesk for smart cities. Connecting
+              citizens, service providers, and municipal authorities on one
+              unified platform.
             </p>
-            
+
             {/* Contact Info */}
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center space-x-2">
@@ -111,24 +112,24 @@ const Footer = () => {
 
             {/* Social Links */}
             <div className="flex space-x-4 mt-6">
-              <a 
-                href="https://github.com/NCJ-Hackademia" 
+              <a
+                href="https://github.com/NCJ-Hackademia"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <Github className="w-5 h-5" />
               </a>
-              <a 
-                href="https://twitter.com/hackademia" 
+              <a
+                href="https://twitter.com/hackademia"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <Twitter className="w-5 h-5" />
               </a>
-              <a 
-                href="https://linkedin.com/company/hackademia" 
+              <a
+                href="https://linkedin.com/company/hackademia"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -146,7 +147,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.platform.map((link) => (
                 <li key={link.href}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm"
                   >
@@ -165,7 +166,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.services.map((link) => (
                 <li key={link.href}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm"
                   >
@@ -184,7 +185,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
-                  <Link 
+                  <Link
                     href={link.href}
                     className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm"
                   >
@@ -204,7 +205,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 {quickActions.map((action) => (
                   <li key={action.href}>
-                    <Link 
+                    <Link
                       href={action.href}
                       className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm flex items-center space-x-1"
                     >
@@ -257,7 +258,7 @@ const Footer = () => {
               {footerLinks.legal.map((link, index) => (
                 <span key={link.href} className="hidden md:inline">
                   {index > 0 && <span className="mx-2">•</span>}
-                  <Link 
+                  <Link
                     href={link.href}
                     className="hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
                   >
@@ -266,18 +267,18 @@ const Footer = () => {
                 </span>
               ))}
             </div>
-            
+
             <div className="mt-2 md:mt-0 flex items-center text-sm text-gray-600 dark:text-gray-400">
               <span>Made with</span>
               <Heart className="w-4 h-4 mx-1 text-red-500" />
               <span>for Smart Cities</span>
             </div>
           </div>
-          
+
           {/* Mobile Legal Links */}
           <div className="md:hidden mt-3 flex flex-wrap gap-4">
             {footerLinks.legal.map((link) => (
-              <Link 
+              <Link
                 key={link.href}
                 href={link.href}
                 className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"

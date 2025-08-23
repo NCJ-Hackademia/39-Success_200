@@ -5,8 +5,10 @@ import Footer from "@/components/layout/Footer";
 
 export const metadata = {
   title: "HACKADEMIA - Digital Citizen Helpdesk",
-  description: "Your digital citizen helpdesk for smart cities. Connecting citizens, service providers, and municipal authorities on one unified platform.",
-  keywords: "smart cities, citizen services, municipal services, urban issues, city problems, service providers",
+  description:
+    "Your digital citizen helpdesk for smart cities. Connecting citizens, service providers, and municipal authorities on one unified platform.",
+  keywords:
+    "smart cities, citizen services, municipal services, urban issues, city problems, service providers",
   authors: [{ name: "HACKADEMIA Team" }],
   creator: "HACKADEMIA",
   publisher: "HACKADEMIA",
@@ -54,9 +56,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
             <Footer />
           </div>
         </ThemeProvider>
