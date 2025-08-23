@@ -65,6 +65,12 @@ const Navbar = () => {
         { href: "/admin-dashboard", label: "Admin Panel", icon: Shield },
         { href: "/admin-dashboard/users", label: "Manage Users", icon: User },
         { href: "/admin-dashboard/issues", label: "All Issues", icon: Wrench },
+        {
+          href: "/admin-dashboard/services",
+          label: "Manage Services",
+          icon: Settings,
+        },
+        { href: "/services", label: "Browse Services", icon: null },
       ];
     } else if (auth.isConsumer) {
       return [
@@ -80,7 +86,12 @@ const Navbar = () => {
           label: "My Bookings",
           icon: null,
         },
-        { href: "/services", label: "Find Services", icon: null },
+        {
+          href: "/consumer-dashboard/services",
+          label: "Browse Services",
+          icon: null,
+        },
+        { href: "/services", label: "All Services", icon: null },
       ];
     } else if (auth.isProvider) {
       return [

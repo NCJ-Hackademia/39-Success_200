@@ -517,6 +517,74 @@ export const issuesAPI = {
   },
 };
 
+// Services API functions
+export const servicesAPI = {
+  // Get all services with filtering
+  getServices: async (params?: {
+    category?: string;
+    provider?: string;
+    available?: boolean;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }): Promise<ApiResponse<Service[]>> => {
+    const response = await api.get<ApiResponse<Service[]>>("/api/services", {
+      params,
+    });
+    return response.data;
+  },
+
+  // Get service by ID
+  getServiceById: async (id: string): Promise<ApiResponse<Service>> => {
+    const response = await api.get<ApiResponse<Service>>(`/api/services/${id}`);
+    return response.data;
+  },
+
+  // Create new service (Provider only)
+  createService: async (serviceData: {
+    name: string;
+    description: string;
+    category: string;
+    price: number;
+  }): Promise<ApiResponse<Service>> => {
+    const response = await api.post<ApiResponse<Service>>(
+      "/api/services",
+      serviceData
+    );
+    return response.data;
+  },
+
+  // Update service (Provider/Admin)
+  updateService: async (
+    id: string,
+    updateData: Partial<Service>
+  ): Promise<ApiResponse<Service>> => {
+    const response = await api.put<ApiResponse<Service>>(
+      `/api/services/${id}`,
+      updateData
+    );
+    return response.data;
+  },
+
+  // Delete service (Provider/Admin)
+  deleteService: async (id: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(`/api/services/${id}`);
+    return response.data;
+  },
+
+  // Get services by provider
+  getProviderServices: async (
+    providerId?: string
+  ): Promise<ApiResponse<Service[]>> => {
+    const url = providerId
+      ? `/api/services?provider=${providerId}`
+      : "/api/services?provider=current";
+    const response = await api.get<ApiResponse<Service[]>>(url);
+    return response.data;
+  },
+};
+
 // Categories API functions
 export const categoriesAPI = {
   // Get all categories

@@ -307,25 +307,39 @@ export default function ConsumerDashboardPage() {
               </CardHeader>
               <CardContent className="">
                 <div className="space-y-2">
-                  <button className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <button
+                    onClick={() => (window.location.href = "/issues")}
+                    className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
                     <div className="flex items-center space-x-2">
                       <Plus className="h-4 w-4 text-blue-600" />
                       <span className="font-medium">Report New Issue</span>
                     </div>
                   </button>
-                  <button className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <button
+                    onClick={() => (window.location.href = "/services")}
+                    className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-green-600" />
                       <span className="font-medium">Book Service</span>
                     </div>
                   </button>
-                  <button className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <button
+                    onClick={() => (window.location.href = "/providers")}
+                    className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-purple-600" />
                       <span className="font-medium">Find Providers</span>
                     </div>
                   </button>
-                  <button className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <button
+                    onClick={() =>
+                      (window.location.href = "/consumer-dashboard/bookings")
+                    }
+                    className="w-full p-3 text-left border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-orange-600" />
                       <span className="font-medium">Track Status</span>

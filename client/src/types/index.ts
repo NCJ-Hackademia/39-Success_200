@@ -113,37 +113,16 @@ export enum IssuePriority {
 
 // Service interface for provider services
 export interface Service {
-  id: string;
-  title: string;
+  id?: string;
+  _id?: string;
+  name: string;
   description: string;
-  category: ServiceCategory;
-  providerId: string;
-  provider?: User; // Populated provider data
-  price: {
-    min: number;
-    max: number;
-    unit: string; // "per hour", "fixed", "per visit"
-  };
-  duration: string; // "1-2 hours", "Same day", etc.
-  availability: {
-    days: string[]; // ["monday", "tuesday", ...]
-    hours: {
-      start: string; // "09:00"
-      end: string; // "18:00"
-    };
-  };
-  serviceArea: {
-    cities: string[];
-    radius: number; // in kilometers
-  };
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  isActive: boolean;
-  isVerified: boolean;
-  features: string[]; // ["Emergency service", "24/7 available", ...]
-  createdAt: string;
-  updatedAt: string;
+  category: string;
+  provider: string | User; // Can be ObjectId string or populated User object
+  price: number;
+  available?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Service categories
