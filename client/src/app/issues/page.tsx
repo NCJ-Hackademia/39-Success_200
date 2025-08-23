@@ -1,5 +1,5 @@
-import IssuesPage from "../../components/issues/IssuesPage";
+import IssuesWithMap from "../../components/issues/IssuesWithMap";
 
 export default function Issues() {
-  return <IssuesPage />;
+  return <IssuesWithMap />;
 }

@@ -111,6 +111,48 @@ export enum IssuePriority {
   URGENT = "urgent",
 }
 
+// Provider interface
+export interface Provider extends User {
+  businessInfo?: {
+    businessName: string;
+    description: string;
+    category: string;
+  };
+  contactInfo?: {
+    phoneNumber: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      postalCode: string;
+      country: string;
+      coordinates: {
+        latitude: number;
+        longitude: number;
+      };
+    };
+  };
+  serviceArea?: {
+    radius: number;
+    center: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  rating?: {
+    average: number;
+    count: number;
+  };
+  pricing?: {
+    basePrice: number;
+    hourlyRate: number;
+    currency: string;
+  };
+  isVerified?: boolean;
+  isOnline?: boolean;
+  services?: string[];
+}
+
 // Service interface for provider services
 export interface Service {
   id?: string;
@@ -118,9 +160,14 @@ export interface Service {
   name: string;
   description: string;
   category: string;
-  provider: string | User; // Can be ObjectId string or populated User object
+  provider: string | User | Provider; // Can be ObjectId string or populated User/Provider object
   price: number;
   available?: boolean;
+  pricing?: {
+    basePrice: number;
+    hourlyRate: number;
+    currency: string;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
