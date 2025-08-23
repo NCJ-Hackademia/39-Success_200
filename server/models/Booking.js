@@ -5,7 +5,7 @@ const bookingSchema = new mongoose.Schema(
     issue: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Issue",
-      required: true,
+      required: false, // Made optional
     },
     consumer: {
       type: mongoose.Schema.Types.ObjectId,

@@ -11,7 +11,8 @@ import {
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { servicesAPI, categoriesAPI, bookingAPI } from "../../lib/api";
+import BookingModal from "../../components/booking/BookingModal";
+import { servicesAPI, categoriesAPI } from "../../lib/api";
 import type { Service, User } from "../../types";
 import {
   Search,
@@ -35,7 +36,13 @@ export default function ServicesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [availableOnly, setAvailableOnly] = useState(true);
-  const [bookingLoading, setBookingLoading] = useState<string | null>(null);
+  const [bookingModal, setBookingModal] = useState<{
+    isOpen: boolean;
+    service: Service | null;
+  }>({
+    isOpen: false,
+    service: null,
+  });
   const router = useRouter();
 
   const fetchServices = async () => {
@@ -84,34 +91,23 @@ export default function ServicesPage() {
     router.push(`/services/${serviceId}`);
   };
 
-  const handleBookService = async (serviceId: string) => {
-    try {
-      setBookingLoading(serviceId);
+  const handleBookService = (service: Service) => {
+    setBookingModal({
+      isOpen: true,
+      service: service,
+    });
+  };
 
-      // Create the booking
-      const bookingData = {
-        service: serviceId,
-        // You might want to add more fields like scheduledDate, notes, etc.
-        // For now, we'll create a basic booking
-      };
+  const handleBookingSuccess = (bookingId: string) => {
+    // Redirect to the bookings page to show the newly created booking
+    router.push(`/consumer-dashboard/bookings`);
+  };
 
-      const response = await bookingAPI.createBooking(bookingData);
-
-      if (response.success) {
-        // Redirect to the bookings page to show the newly created booking
-        router.push(`/consumer-dashboard/bookings`);
-      } else {
-        throw new Error(response.message || "Failed to create booking");
-      }
-    } catch (err: any) {
-      console.error("Error creating booking:", err);
-      // You might want to show a toast notification here
-      alert(
-        err.response?.data?.message || err.message || "Failed to create booking"
-      );
-    } finally {
-      setBookingLoading(null);
-    }
+  const handleCloseBookingModal = () => {
+    setBookingModal({
+      isOpen: false,
+      service: null,
+    });
   };
 
   if (loading) {
@@ -276,21 +272,11 @@ export default function ServicesPage() {
                       className="flex-1"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleBookService(service.id || service._id);
+                        handleBookService(service);
                       }}
-                      disabled={
-                        !service.available ||
-                        bookingLoading === (service.id || service._id)
-                      }
+                      disabled={!service.available}
                     >
-                      {bookingLoading === (service.id || service._id) ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Booking...
-                        </>
-                      ) : (
-                        "Book Now"
-                      )}
+                      Book Now
                     </Button>
                   </div>
                 </CardContent>
@@ -309,6 +295,14 @@ export default function ServicesPage() {
           </div>
         )}
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={bookingModal.isOpen}
+        onClose={handleCloseBookingModal}
+        service={bookingModal.service}
+        onBookingSuccess={handleBookingSuccess}
+      />
     </div>
   );
 }

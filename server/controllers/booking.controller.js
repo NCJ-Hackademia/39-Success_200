@@ -104,35 +104,56 @@ export const createBooking = async (req, res) => {
     const { issue, provider, service, scheduledDate, totalAmount, notes } =
       req.body;
 
-    // Verify the issue exists and is not already booked
-    const existingIssue = await Issue.findById(issue);
-    if (!existingIssue) {
-      return res.status(404).json({ message: "Issue not found" });
+    // Verify required fields
+    if (!service) {
+      return res.status(400).json({ message: "Service is required" });
     }
 
-    // Check if issue is already resolved or has an active booking
-    const existingBooking = await Booking.findOne({
-      issue: issue,
-      status: { $in: ["pending", "confirmed", "in_progress"] },
-    });
+    if (!provider) {
+      return res.status(400).json({ message: "Provider is required" });
+    }
 
-    if (existingBooking) {
-      return res.status(400).json({
-        message: "This issue already has an active booking",
+    if (!scheduledDate) {
+      return res.status(400).json({ message: "Scheduled date is required" });
+    }
+
+    // Verify the issue exists if provided
+    if (issue) {
+      const existingIssue = await Issue.findById(issue);
+      if (!existingIssue) {
+        return res.status(404).json({ message: "Issue not found" });
+      }
+
+      // Check if issue is already resolved or has an active booking
+      const existingBooking = await Booking.findOne({
+        issue: issue,
+        status: { $in: ["pending", "confirmed", "in_progress"] },
       });
+
+      if (existingBooking) {
+        return res.status(400).json({
+          message: "This issue already has an active booking",
+        });
+      }
     }
 
-    const booking = new Booking({
-      issue,
+    const bookingData = {
       consumer: req.user.id,
       provider,
       service,
       scheduledDate,
-      totalAmount,
-      notes,
+      totalAmount: totalAmount || 0,
+      notes: notes || "",
       status: "pending",
       paymentStatus: "pending",
-    });
+    };
+
+    // Only add issue if provided
+    if (issue) {
+      bookingData.issue = issue;
+    }
+
+    const booking = new Booking(bookingData);
 
     await booking.save();
 
