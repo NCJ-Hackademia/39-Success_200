@@ -1,5 +1,7 @@
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import env from "../config/env.js";
 
 export const register = async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -39,8 +41,20 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    res.status(200).json({
+    // Generate JWT token with 7-day expiry
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    return res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -49,6 +63,8 @@ export const login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
