@@ -112,6 +112,24 @@ export const authAPI = {
       localStorage.removeItem("user-storage");
     }
   },
+
+  // Get current user profile
+  getMe: async (): Promise<ApiResponse<User>> => {
+    const response = await api.get<ApiResponse<User>>("/api/auth/me");
+    return response.data;
+  },
+
+  // Update user profile
+  updateProfile: async (profileData: {
+    name?: string;
+    phone?: string;
+  }): Promise<ApiResponse<User>> => {
+    const response = await api.put<ApiResponse<User>>(
+      "/api/auth/update-profile",
+      profileData
+    );
+    return response.data;
+  },
 };
 
 // Dashboard API functions
