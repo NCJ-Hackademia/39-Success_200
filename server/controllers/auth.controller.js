@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import env from "../config/env.js";
 
 export const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password || !role) {
+  const { name, email, password, phone, role } = req.body;
+  if (!name || !email || !password || !phone || !role) {
     return res.status(400).json({ message: "All fields are required" });
   }
   if (!["admin", "consumer", "provider"].includes(role)) {
@@ -19,7 +19,13 @@ export const register = async (req, res) => {
       return res.status(409).json({ message: "Email already registered" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, role });
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+    });
     await user.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
@@ -47,6 +53,7 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
       },
       env.JWT_SECRET,
