@@ -12,6 +12,8 @@ import {
 import { Button } from "../../../components/ui/button";
 import { ProtectedRoute } from "../../../components/ProtectedRoute";
 import api from "../../../lib/api";
+import ChatModal from "../../../components/chat/ChatModal";
+import { useUserStore } from "../../../store/userStore";
 import {
   Calendar,
   Clock,
@@ -23,6 +25,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 
 interface Booking {
@@ -63,10 +66,15 @@ interface Booking {
 
 export default function ProviderBookingsPage() {
   const router = useRouter();
+  const { user } = useUserStore();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingBooking, setUpdatingBooking] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null
+  );
+  const [showChat, setShowChat] = useState(false);
 
   const fetchProviderBookings = async () => {
     try {
@@ -130,6 +138,16 @@ export default function ProviderBookingsPage() {
     } finally {
       setUpdatingBooking(null);
     }
+  };
+
+  const openChat = (bookingId: string) => {
+    setSelectedBookingId(bookingId);
+    setShowChat(true);
+  };
+
+  const closeChat = () => {
+    setShowChat(false);
+    setSelectedBookingId(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -246,7 +264,7 @@ export default function ProviderBookingsPage() {
                   No Pending Bookings
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  You don't have any pending bookings at the moment.
+                  You don&apos;t have any pending bookings at the moment.
                 </p>
               </CardContent>
             </Card>
@@ -377,24 +395,55 @@ export default function ProviderBookingsPage() {
                               </>
                             )}
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openChat(booking._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Chat
+                          </Button>
                         </>
                       )}
 
                       {booking.status === "confirmed" && (
-                        <div className="flex items-center space-x-2 text-green-600">
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="text-sm font-medium">
-                            Booking Confirmed
-                          </span>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 text-green-600">
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-sm font-medium">
+                              Booking Confirmed
+                            </span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openChat(booking._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Chat
+                          </Button>
                         </div>
                       )}
 
                       {booking.status === "in_progress" && (
-                        <div className="flex items-center space-x-2 text-blue-600">
-                          <Clock className="h-4 w-4" />
-                          <span className="text-sm font-medium">
-                            Work in Progress
-                          </span>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 text-blue-600">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm font-medium">
+                              In Progress
+                            </span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openChat(booking._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Chat
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -405,6 +454,16 @@ export default function ProviderBookingsPage() {
           )}
         </div>
       </div>
+
+      {/* Chat Modal */}
+      {showChat && selectedBookingId && user && (
+        <ChatModal
+          isOpen={showChat}
+          onClose={closeChat}
+          bookingId={selectedBookingId}
+          currentUserId={user.id}
+        />
+      )}
     </ProtectedRoute>
   );
 }

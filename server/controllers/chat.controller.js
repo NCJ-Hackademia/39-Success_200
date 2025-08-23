@@ -126,38 +126,17 @@ export const getChatMessages = async (req, res) => {
 
     const messages = await Message.find({ chatRoomId })
       .populate("senderId", "name email role")
-      .populate("replyTo", "content.text senderId")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
-
-    // Mark messages as read by current user
-    await Message.updateMany(
-      {
-        chatRoomId,
-        senderId: { $ne: req.user.id },
-        "readBy.userId": { $ne: req.user.id },
-      },
-      {
-        $push: {
-          readBy: {
-            userId: req.user.id,
-            readAt: new Date(),
-          },
-        },
-      }
-    );
-
-    // Update unread count in chat room
-    const unreadCount = { ...chatRoom.unreadCount };
-    unreadCount[req.user.id] = 0;
-    await ChatRoom.findByIdAndUpdate(chatRoomId, { unreadCount });
+      .limit(parseInt(limit))
+      .lean(); // Use lean() to get plain objects
 
     res.status(200).json({
       success: true,
       data: messages.reverse(), // Return in chronological order
     });
   } catch (err) {
+    console.error("Error in getChatMessages:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

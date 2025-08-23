@@ -7,6 +7,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../../contexts/ToastContext";
+import { useUserStore } from "../../store/userStore";
 import { bookingAPI, issuesAPI } from "../../lib/api";
 import type { Service, Issue } from "../../types";
 import {
@@ -42,6 +43,7 @@ export default function BookingModal({
   const [loadingIssues, setLoadingIssues] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
+  const { user, isAuthenticated } = useUserStore();
 
   // Calculate total amount (you can add service fees, taxes, etc. here)
   const calculateTotalAmount = () => {
@@ -84,6 +86,17 @@ export default function BookingModal({
     e.preventDefault();
 
     if (!service) return;
+
+    // Check authentication
+    if (!isAuthenticated || !user) {
+      setError("You must be logged in to create a booking");
+      addToast({
+        type: "error",
+        message: "Please log in to create a booking",
+        duration: 5000,
+      });
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -196,10 +209,25 @@ export default function BookingModal({
 
               <div className="flex items-center text-lg font-semibold text-green-600">
                 <DollarSign className="h-5 w-5 mr-1" />
-                <span>${calculateTotalAmount()}</span>
+                <span>₹{calculateTotalAmount().toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>
+
+          {/* Authentication Warning */}
+          {!isAuthenticated && (
+            <Card className="border border-orange-200 bg-orange-50">
+              <CardContent className="p-4">
+                <div className="flex items-center text-orange-800">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <span className="text-sm font-medium">
+                    You must be logged in to create a booking. Please log in
+                    first.
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Booking Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -309,7 +337,7 @@ export default function BookingModal({
                 type="submit"
                 variant="default"
                 size="default"
-                disabled={loading}
+                disabled={loading || !isAuthenticated}
                 className="flex-1"
               >
                 {loading ? (
@@ -317,8 +345,10 @@ export default function BookingModal({
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Creating Booking...
                   </>
+                ) : !isAuthenticated ? (
+                  "Please Log In"
                 ) : (
-                  `Book for $${calculateTotalAmount()}`
+                  `Book for ₹${calculateTotalAmount().toLocaleString()}`
                 )}
               </Button>
             </div>

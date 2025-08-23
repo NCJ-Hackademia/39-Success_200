@@ -509,13 +509,13 @@ export default function ChatModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="border-t p-2">
+        <div className="border-t p-2 dark:bg-gray-8000">
           <div className="flex space-x-2 mb-3">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowPriceOffer(true)}
-              className="flex items-center"
+              className="flex items-center border-2 border-blue-500"
             >
               <DollarSign className="h-4 w-4 mr-1" />
               Price Offer
@@ -524,7 +524,7 @@ export default function ChatModal({
               size="sm"
               variant="outline"
               onClick={() => setShowScheduleModal(true)}
-              className="flex items-center"
+              className="flex items-center border-2 border-green-500"
             >
               <Calendar className="h-4 w-4 mr-1" />
               Reschedule
@@ -534,7 +534,7 @@ export default function ChatModal({
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="flex items-center"
+              className="flex items-center border-2 border-orange-500"
             >
               {uploading ? (
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />

@@ -5,11 +5,15 @@ import { dashboardAPI } from "../../../lib/api";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { useUserStore } from "../../../store/userStore";
+import ChatModal from "../../../components/chat/ChatModal";
+import { MessageCircle } from "lucide-react";
 
 const ConsumerBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [showChat, setShowChat] = useState(false);
   const { user } = useUserStore();
 
   useEffect(() => {
@@ -47,6 +51,16 @@ const ConsumerBookings = () => {
         {status?.replace("_", " ").toUpperCase() || "PENDING"}
       </span>
     );
+  };
+
+  const openChat = (bookingId) => {
+    setSelectedBookingId(bookingId);
+    setShowChat(true);
+  };
+
+  const closeChat = () => {
+    setShowChat(false);
+    setSelectedBookingId(null);
   };
 
   const formatDate = (dateString) => {
@@ -102,7 +116,9 @@ const ConsumerBookings = () => {
       {bookings.length === 0 ? (
         <Card className="p-6">
           <div className="text-center text-gray-600">
-            <p className="text-lg mb-4">You don't have any bookings yet.</p>
+            <p className="text-lg mb-4">
+              You don&apos;t have any bookings yet.
+            </p>
             <p>
               Start by finding services or reporting issues that need
               professional help.
@@ -161,11 +177,24 @@ const ConsumerBookings = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Estimated Cost</p>
+                  <p className="text-sm text-gray-500">Service Cost</p>
                   <p className="font-medium">
-                    ₹{booking.estimatedCost?.toLocaleString() || "TBD"}
+                    ₹
+                    {booking.totalAmount?.toLocaleString() ||
+                      booking.originalAmount?.toLocaleString() ||
+                      booking.service?.price?.toLocaleString() ||
+                      "TBD"}
                   </p>
                 </div>
+                {booking.negotiatedAmount &&
+                  booking.negotiatedAmount !== booking.totalAmount && (
+                    <div>
+                      <p className="text-sm text-gray-500">Negotiated Price</p>
+                      <p className="font-medium text-green-600">
+                        ₹{booking.negotiatedAmount.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
                 {booking.finalCost && (
                   <div>
                     <p className="text-sm text-gray-500">Final Cost</p>
@@ -203,16 +232,39 @@ const ConsumerBookings = () => {
                 )}
               </div>
 
-              {booking.status === "completed" && !booking.rating && (
-                <div className="mt-4 pt-4 border-t">
+              <div className="mt-4 pt-4 border-t flex gap-2">
+                {(booking.status === "pending" ||
+                  booking.status === "confirmed" ||
+                  booking.status === "in_progress") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openChat(booking._id || booking.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Chat with Provider
+                  </Button>
+                )}
+                {booking.status === "completed" && !booking.rating && (
                   <Button variant="outline" size="sm" className="">
                     Rate Service
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Chat Modal */}
+      {showChat && selectedBookingId && user && (
+        <ChatModal
+          isOpen={showChat}
+          onClose={closeChat}
+          bookingId={selectedBookingId}
+          currentUserId={user.id}
+        />
       )}
     </div>
   );
