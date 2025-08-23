@@ -319,7 +319,7 @@ export default function RegisterPage() {
                             : "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     >
                       <div className="flex items-center space-x-3">
                         {formData.userType === "admin" ? (
@@ -369,7 +369,7 @@ export default function RegisterPage() {
                                 ? "bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700"
                                 : ""
                             }`}
-                            disabled={isLoading}
+                            disabled={auth.isLoading}
                           >
                             <div className="flex items-center space-x-3">
                               <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -399,7 +399,7 @@ export default function RegisterPage() {
                                 ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
                                 : ""
                             }`}
-                            disabled={isLoading}
+                            disabled={auth.isLoading}
                           >
                             <div className="flex items-center space-x-3">
                               <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -433,7 +433,7 @@ export default function RegisterPage() {
                           setShowUserRoleDropdown(!showUserRoleDropdown)
                         }
                         className="w-full p-4 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        disabled={isLoading}
+                        disabled={auth.isLoading}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
@@ -477,7 +477,7 @@ export default function RegisterPage() {
                                   ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700"
                                   : ""
                               }`}
-                              disabled={isLoading}
+                              disabled={auth.isLoading}
                             >
                               <div className="flex items-center space-x-3">
                                 <User className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -503,7 +503,7 @@ export default function RegisterPage() {
                                   ? "bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700"
                                   : ""
                               }`}
-                              disabled={isLoading}
+                              disabled={auth.isLoading}
                             >
                               <div className="flex items-center space-x-3">
                                 <Wrench className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -594,7 +594,7 @@ export default function RegisterPage() {
                       className={`pl-10 ${
                         errors.name ? "border-red-500 focus:border-red-500" : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
                   {errors.name && (
@@ -628,7 +628,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
                   {errors.email && (
@@ -662,7 +662,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
                   {errors.phone && (
@@ -691,7 +691,7 @@ export default function RegisterPage() {
                         handleInputChange("dateOfBirth", e.target.value)
                       }
                       className="pl-10"
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
                 </div>
@@ -711,7 +711,7 @@ export default function RegisterPage() {
                       handleInputChange("gender", e.target.value)
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    disabled={isLoading}
+                    disabled={auth.isLoading}
                   >
                     <option value="">Select Gender</option>
                     <option value="male">Male</option>
@@ -758,7 +758,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
                   {errors.address && (
@@ -789,7 +789,7 @@ export default function RegisterPage() {
                       className={
                         errors.city ? "border-red-500 focus:border-red-500" : ""
                       }
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                     {errors.city && (
                       <p className="text-sm text-red-600 flex items-center space-x-1">
@@ -820,7 +820,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                     {errors.state && (
                       <p className="text-sm text-red-600 flex items-center space-x-1">
@@ -851,7 +851,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                     {errors.pincode && (
                       <p className="text-sm text-red-600 flex items-center space-x-1">
@@ -902,7 +902,7 @@ export default function RegisterPage() {
                             ? "border-red-500 focus:border-red-500"
                             : ""
                         }`}
-                        disabled={isLoading}
+                        disabled={auth.isLoading}
                       />
                     </div>
                     {errors.businessName && (
@@ -932,7 +932,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     >
                       <option value="">Select Category</option>
                       <option value="plumber">Plumber</option>
@@ -969,7 +969,7 @@ export default function RegisterPage() {
                         handleInputChange("experience", e.target.value)
                       }
                       min="0"
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
 
@@ -996,7 +996,7 @@ export default function RegisterPage() {
                             ? "border-red-500 focus:border-red-500"
                             : ""
                         }`}
-                        disabled={isLoading}
+                        disabled={auth.isLoading}
                       />
                     </div>
                     {errors.website && (
@@ -1030,7 +1030,7 @@ export default function RegisterPage() {
                             ? "border-red-500 focus:border-red-500"
                             : ""
                         }`}
-                        disabled={isLoading}
+                        disabled={auth.isLoading}
                       />
                     </div>
                     {errors.govtIdNumber && (
@@ -1058,7 +1058,7 @@ export default function RegisterPage() {
                       }
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                   </div>
                 </div>
@@ -1102,13 +1102,13 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -1148,7 +1148,7 @@ export default function RegisterPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     />
                     <button
                       type="button"
@@ -1156,7 +1156,7 @@ export default function RegisterPage() {
                         setShowConfirmPassword(!showConfirmPassword)
                       }
                       className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -1199,7 +1199,7 @@ export default function RegisterPage() {
                               ? "border-red-500 focus:border-red-500"
                               : ""
                           }`}
-                          disabled={isLoading}
+                          disabled={auth.isLoading}
                         >
                           <option value="">Select Security Question</option>
                           <option value="hackademia-access">
@@ -1238,7 +1238,7 @@ export default function RegisterPage() {
                               ? "border-red-500 focus:border-red-500"
                               : ""
                           }`}
-                          disabled={isLoading}
+                          disabled={auth.isLoading}
                         />
                       </div>
                       {errors.securityAnswer && (

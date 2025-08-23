@@ -410,6 +410,59 @@ export const dashboardAPI = {
   },
 };
 
+// Booking API functions
+export const bookingAPI = {
+  // Create a new booking
+  createBooking: async (bookingData: {
+    issue?: string;
+    provider?: string;
+    service: string;
+    scheduledDate?: string;
+    totalAmount?: number;
+    notes?: string;
+  }): Promise<ApiResponse<Booking>> => {
+    const response = await api.post<ApiResponse<Booking>>(
+      "/api/bookings",
+      bookingData
+    );
+    return response.data;
+  },
+
+  // Get all bookings
+  getBookings: async (
+    params?: PaginationParams
+  ): Promise<ApiResponse<Booking[]>> => {
+    const response = await api.get<ApiResponse<Booking[]>>("/api/bookings", {
+      params,
+    });
+    return response.data;
+  },
+
+  // Get booking by ID
+  getBookingById: async (id: string): Promise<ApiResponse<Booking>> => {
+    const response = await api.get<ApiResponse<Booking>>(`/api/bookings/${id}`);
+    return response.data;
+  },
+
+  // Update booking
+  updateBooking: async (
+    id: string,
+    updateData: Partial<Booking>
+  ): Promise<ApiResponse<Booking>> => {
+    const response = await api.patch<ApiResponse<Booking>>(
+      `/api/bookings/${id}`,
+      updateData
+    );
+    return response.data;
+  },
+
+  // Delete booking
+  deleteBooking: async (id: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(`/api/bookings/${id}`);
+    return response.data;
+  },
+};
+
 // Issues API functions
 export const issuesAPI = {
   // Get all issues with pagination
