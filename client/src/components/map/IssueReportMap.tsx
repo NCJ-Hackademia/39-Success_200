@@ -215,9 +215,11 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
             <div className="p-2">
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-red-600" />
-                <span className="text-sm font-medium">Issue Location</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  Issue Location
+                </span>
               </div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 {selectedLocation[0].toFixed(6)},{" "}
                 {selectedLocation[1].toFixed(6)}
               </p>
@@ -239,7 +241,9 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
         <CardContent className="space-y-4">
           {/* Location Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Location</label>
+            <label className="text-sm font-medium text-gray-900 dark:text-white">
+              Select Location
+            </label>
             <div className="flex space-x-2">
               <Button
                 type="button"
@@ -256,7 +260,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
                 )}
                 <span>Use Current Location</span>
               </Button>
-              <span className="text-sm text-gray-500 self-center">
+              <span className="text-sm text-gray-500 dark:text-gray-400 self-center">
                 or click on the map below
               </span>
             </div>
@@ -274,7 +278,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
           </div>
 
           {selectedLocation && (
-            <div className="text-sm text-gray-600 bg-green-50 p-2 rounded">
+            <div className="text-sm text-gray-600 dark:text-gray-400 bg-green-50 dark:bg-green-900 p-2 rounded">
               📍 Location selected: {selectedLocation[0].toFixed(6)},{" "}
               {selectedLocation[1].toFixed(6)}
             </div>
@@ -283,7 +287,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
           {/* Issue Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 Issue Title *
               </label>
               <Input
@@ -299,7 +303,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 Category *
               </label>
               <select
@@ -307,7 +311,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, category: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               >
                 <option value="">Select a category</option>
@@ -326,7 +330,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 Description *
               </label>
               <Textarea
@@ -344,7 +348,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
                 Photos (Optional - Max 5)
               </label>
               <input
@@ -352,7 +356,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
                 accept="image/*"
                 multiple
                 onChange={handleImageUpload}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800"
               />
               {formData.images.length > 0 && (
                 <div className="mt-2 grid grid-cols-3 gap-2">
@@ -361,7 +365,7 @@ const IssueReportMap: React.FC<IssueReportMapProps> = ({
                       <img
                         src={URL.createObjectURL(image)}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-20 object-cover rounded border"
+                        className="w-full h-20 object-cover rounded border border-gray-300 dark:border-gray-600"
                       />
                       <button
                         type="button"

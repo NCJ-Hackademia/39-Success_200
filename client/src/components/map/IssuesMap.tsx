@@ -195,7 +195,7 @@ const IssuesMap: React.FC<IssuesMapProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="bg-white p-3 rounded-lg border">
+      <div className="dark:bg-black p-3 rounded-lg border">
         <h4 className="text-sm font-medium mb-2">Legend</h4>
         <div className="flex flex-wrap gap-4 text-xs">
           <div className="flex items-center space-x-1">
