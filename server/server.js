@@ -1,13 +1,15 @@
-import express from "express";
+import app from "./app.js";
+import connectDB from "./config/db.js";
+import env from "./config/env.js";
 
-const app = express();
+const PORT = env.PORT || 1011;
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-const PORT = process.env.PORT || 1011;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB", err);
+  });
