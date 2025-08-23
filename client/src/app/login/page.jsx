@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { useUserActions } from "../../store/userStore";
+import { authAPI } from "../../lib/api";
 import {
   Eye,
   EyeOff,
@@ -80,26 +81,35 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      // Mock API call - replace with actual API
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Mock successful login - replace with actual API response
-      const mockUser = {
-        id: 1,
-        name: "John Doe",
-        email: formData.email,
-        role: formData.email.includes("admin") ? "admin" : "consumer",
-      };
-
-      const mockToken = "mock-jwt-token-" + Date.now();
+      // Call the actual API
+      const response = await authAPI.login({
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+      });
 
       // Set authentication state
-      setAuth(mockUser, mockToken);
+      setAuth(response.user, response.token);
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Store token in localStorage for persistence
+      if (typeof window !== "undefined") {
+        localStorage.setItem("authToken", response.token);
+      }
+
+      // Redirect based on role
+      let redirectPath = "/dashboard"; // default for consumer
+      if (response.user.role === "provider") {
+        redirectPath = "/provider-dashboard";
+      } else if (response.user.role === "admin") {
+        redirectPath = "/admin-dashboard";
+      }
+
+      router.push(redirectPath);
     } catch (error) {
-      setErrors({ general: "Invalid email or password. Please try again." });
+      console.error("Login error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Invalid email or password. Please try again.";
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }

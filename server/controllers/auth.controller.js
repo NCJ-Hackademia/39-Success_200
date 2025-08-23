@@ -27,7 +27,30 @@ export const register = async (req, res) => {
       role,
     });
     await user.save();
-    res.status(201).json({ message: "User registered successfully" });
+
+    // Generate JWT token for immediate login after registration
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+      env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

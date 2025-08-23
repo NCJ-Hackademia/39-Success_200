@@ -73,4 +73,37 @@ api.interceptors.response.use(
   }
 );
 
+// Authentication API functions
+export const authAPI = {
+  // Register user
+  register: async (userData: {
+    name: string;
+    email: string;
+    password: string;
+    phone: string;
+    role: string;
+  }): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>("/auth/register", userData);
+    return response.data;
+  },
+
+  // Login user
+  login: async (credentials: {
+    email: string;
+    password: string;
+  }): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>("/auth/login", credentials);
+    return response.data;
+  },
+
+  // Logout user (client-side cleanup)
+  logout: () => {
+    const { clearAuth } = useUserStore.getState();
+    clearAuth();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("authToken");
+    }
+  },
+};
+
 export default api;

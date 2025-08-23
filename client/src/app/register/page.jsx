@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { useUserActions } from "../../store/userStore";
+import { authAPI } from "../../lib/api";
 import {
   Eye,
   EyeOff,
@@ -233,47 +234,38 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      // Simulate API call for registration
-      // Replace this with actual API call to your backend
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.toLowerCase().trim(),
-          phone: formData.phone.trim(),
-          password: formData.password,
-          role: formData.userType === "admin" ? "admin" : formData.role,
-        }),
+      // Call the actual API
+      const response = await authAPI.register({
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
+        phone: formData.phone.trim(),
+        password: formData.password,
+        role: formData.userType === "admin" ? "admin" : formData.role,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
-      }
-
-      const data = await response.json();
-
       // Store user data and token
-      setAuth(data.user, data.token);
+      setAuth(response.user, response.token);
+
+      // Store token in localStorage for persistence
+      if (typeof window !== "undefined") {
+        localStorage.setItem("authToken", response.token);
+      }
 
       // Redirect based on role
       let redirectPath = "/dashboard"; // default for consumer
-      if (data.user.role === "provider") {
+      if (response.user.role === "provider") {
         redirectPath = "/provider-dashboard";
-      } else if (data.user.role === "admin") {
+      } else if (response.user.role === "admin") {
         redirectPath = "/admin-dashboard";
       }
       router.push(redirectPath);
     } catch (error) {
       console.error("Registration error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Registration failed. Please try again.";
       setErrors({
-        general:
-          error instanceof Error
-            ? error.message
-            : "Registration failed. Please try again.",
+        general: errorMessage,
       });
     } finally {
       setIsLoading(false);
