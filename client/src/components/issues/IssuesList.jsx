@@ -294,7 +294,7 @@ const IssuesList = ({ showUserIssuesOnly = false, onIssueSelect }) => {
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange("status", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">All Status</option>
             <option value="open">Open</option>
@@ -306,7 +306,7 @@ const IssuesList = ({ showUserIssuesOnly = false, onIssueSelect }) => {
           <select
             value={filters.sortBy}
             onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="createdAt">Date</option>
             <option value="upvotes">Upvotes</option>
@@ -317,7 +317,7 @@ const IssuesList = ({ showUserIssuesOnly = false, onIssueSelect }) => {
           <select
             value={filters.sortOrder}
             onChange={(e) => handleFilterChange("sortOrder", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>

@@ -163,7 +163,7 @@ const AdminIssues = () => {
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange("status", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">All Status</option>
             <option value="open">Open</option>
@@ -175,7 +175,7 @@ const AdminIssues = () => {
           <select
             value={filters.priority}
             onChange={(e) => handleFilterChange("priority", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">All Priority</option>
             <option value="low">Low</option>
@@ -187,7 +187,7 @@ const AdminIssues = () => {
           <select
             value={filters.sortBy}
             onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="createdAt">Date</option>
             <option value="upvotes">Upvotes</option>
@@ -198,7 +198,7 @@ const AdminIssues = () => {
           <select
             value={filters.sortOrder}
             onChange={(e) => handleFilterChange("sortOrder", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
@@ -302,7 +302,7 @@ const AdminIssues = () => {
                             e.target.value
                           )
                         }
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
                         <option value="open">Open</option>
                         <option value="in_progress">In Progress</option>

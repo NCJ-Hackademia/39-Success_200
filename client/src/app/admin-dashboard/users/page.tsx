@@ -97,7 +97,7 @@ const AdminUsers = () => {
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, search: e.target.value }))
             }
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           />
 
           <select
@@ -105,7 +105,7 @@ const AdminUsers = () => {
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, role: e.target.value }))
             }
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">All Roles</option>
             <option value="admin">Admin</option>

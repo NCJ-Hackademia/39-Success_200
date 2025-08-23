@@ -7,22 +7,22 @@ import {
   deleteBooking,
   getProviderStats,
 } from "../controllers/booking.controller.js";
-import { protect } from "../middleware/auth.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Protect all booking routes
-router.use(protect);
-
 // Routes
-router.route("/").get(getAllBookings).post(createBooking);
+router
+  .route("/")
+  .get(authenticate(["admin", "provider", "consumer"]), getAllBookings)
+  .post(authenticate(["consumer"]), createBooking);
 router
   .route("/:id")
-  .get(getBookingById)
-  .patch(updateBooking)
-  .delete(deleteBooking);
+  .get(authenticate(["admin", "provider", "consumer"]), getBookingById)
+  .patch(authenticate(["admin", "provider", "consumer"]), updateBooking)
+  .delete(authenticate(["admin", "consumer"]), deleteBooking);
 
 // Provider stats route
-router.get("/provider/stats", getProviderStats);
+router.get("/provider/stats", authenticate(["provider"]), getProviderStats);
 
 export default router;

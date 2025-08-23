@@ -265,7 +265,7 @@ const ReportIssue = ({ onIssueCreated }) => {
         <div>
           <label
             htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Issue Title *
           </label>
@@ -285,7 +285,7 @@ const ReportIssue = ({ onIssueCreated }) => {
         <div>
           <label
             htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Description *
           </label>
@@ -297,7 +297,7 @@ const ReportIssue = ({ onIssueCreated }) => {
             placeholder="Detailed description of the issue"
             required
             rows={4}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           />
         </div>
 
@@ -305,7 +305,7 @@ const ReportIssue = ({ onIssueCreated }) => {
         <div>
           <label
             htmlFor="category"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Category *
           </label>
@@ -315,7 +315,7 @@ const ReportIssue = ({ onIssueCreated }) => {
             value={formData.category}
             onChange={handleInputChange}
             required
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">Select a category</option>
             {categories.map((category) => (
@@ -330,7 +330,7 @@ const ReportIssue = ({ onIssueCreated }) => {
         <div>
           <label
             htmlFor="priority"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Priority
           </label>
@@ -339,7 +339,7 @@ const ReportIssue = ({ onIssueCreated }) => {
             name="priority"
             value={formData.priority}
             onChange={handleInputChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -350,8 +350,8 @@ const ReportIssue = ({ onIssueCreated }) => {
 
         {/* Location */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Location
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Location *
           </label>
           <div className="space-y-2">
             <Button
@@ -385,7 +385,7 @@ const ReportIssue = ({ onIssueCreated }) => {
         <div>
           <label
             htmlFor="images"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Images (Optional)
           </label>
@@ -395,7 +395,7 @@ const ReportIssue = ({ onIssueCreated }) => {
             multiple
             accept="image/*"
             onChange={handleImageUpload}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-800 dark:file:text-gray-300"
           />
           <p className="text-sm text-gray-500 mt-1">
             Upload photos to help illustrate the issue
@@ -421,7 +421,7 @@ const ReportIssue = ({ onIssueCreated }) => {
         <div>
           <label
             htmlFor="estimatedCost"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Estimated Cost (Optional)
           </label>
