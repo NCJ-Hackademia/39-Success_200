@@ -1,8 +1,7 @@
 import express from "express";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import env from "./config/env.js";
 
-dotenv.config();
 const app = express();
 app.use(express.json());
 
@@ -10,7 +9,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-const PORT = process.env.PORT || 1011;
+const PORT = env.PORT;
 
 connectDB()
   .then(() => {
