@@ -1,5 +1,9 @@
 import { useRouter } from "next/navigation";
-import { useAuth as useAuthStore, useUserActions, useUserRole } from "../store/userStore";
+import {
+  useAuth as useAuthStore,
+  useUserActions,
+  useUserRole,
+} from "../store/userStore";
 import { authAPI } from "../lib/api";
 
 /**
@@ -8,7 +12,15 @@ import { authAPI } from "../lib/api";
  */
 export const useAuth = () => {
   const router = useRouter();
-  const { user, token, isAuthenticated, isLoading, userRole, isLoggedIn, hasRole } = useAuthStore();
+  const {
+    user,
+    token,
+    isAuthenticated,
+    isLoading,
+    userRole,
+    isLoggedIn,
+    hasRole,
+  } = useAuthStore();
   const { setAuth, clearAuth, setLoading } = useUserActions();
   const { isAdmin, isConsumer, isProvider, isVerifiedProvider } = useUserRole();
 
@@ -19,10 +31,10 @@ export const useAuth = () => {
     setLoading(true);
     try {
       const response = await authAPI.login(credentials);
-      
+
       // Set authentication state
       setAuth(response.user, response.token);
-      
+
       // Store token in localStorage for persistence
       if (typeof window !== "undefined") {
         localStorage.setItem("authToken", response.token);
@@ -37,7 +49,8 @@ export const useAuth = () => {
       console.error("Login error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Login failed. Please try again.",
+        error:
+          error.response?.data?.message || "Login failed. Please try again.",
       };
     } finally {
       setLoading(false);
@@ -51,10 +64,10 @@ export const useAuth = () => {
     setLoading(true);
     try {
       const response = await authAPI.register(userData);
-      
+
       // Set authentication state
       setAuth(response.user, response.token);
-      
+
       // Store token in localStorage for persistence
       if (typeof window !== "undefined") {
         localStorage.setItem("authToken", response.token);
@@ -69,7 +82,9 @@ export const useAuth = () => {
       console.error("Registration error:", error);
       return {
         success: false,
-        error: error.response?.data?.message || "Registration failed. Please try again.",
+        error:
+          error.response?.data?.message ||
+          "Registration failed. Please try again.",
       };
     } finally {
       setLoading(false);
@@ -82,13 +97,13 @@ export const useAuth = () => {
   const logout = () => {
     // Clear authentication state
     clearAuth();
-    
+
     // Clear localStorage
     if (typeof window !== "undefined") {
       localStorage.removeItem("authToken");
       localStorage.removeItem("user-storage");
     }
-    
+
     // Redirect to home page
     router.push("/");
   };

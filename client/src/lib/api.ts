@@ -100,7 +100,7 @@ export const authAPI = {
   logout: () => {
     const { clearAuth } = useUserStore.getState();
     clearAuth();
-    
+
     if (typeof window !== "undefined") {
       localStorage.removeItem("authToken");
       localStorage.removeItem("user-storage");

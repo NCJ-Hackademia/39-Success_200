@@ -34,7 +34,7 @@ const Navbar = () => {
   const handleLogout = () => {
     // Use the enhanced auth logout function
     auth.logout();
-    
+
     // Close any open dropdowns
     setIsProfileOpen(false);
     setIsMenuOpen(false);
@@ -45,7 +45,7 @@ const Navbar = () => {
 
   // Navigation items based on user role
   const getNavItems = () => {
-    if (!isAuthenticated) {
+    if (!auth.isAuthenticated) {
       return [
         { href: "/", label: "Home", icon: Home },
         { href: "/about", label: "About", icon: null },
@@ -58,14 +58,14 @@ const Navbar = () => {
       { href: "/map", label: "Map View", icon: MapPin },
     ];
 
-    if (isAdmin()) {
+    if (auth.isAdmin) {
       return [
         ...baseItems,
         { href: "/admin", label: "Admin Panel", icon: Shield },
         { href: "/admin/users", label: "Manage Users", icon: User },
         { href: "/admin/issues", label: "All Issues", icon: Wrench },
       ];
-    } else if (isConsumer()) {
+    } else if (auth.isConsumer) {
       return [
         ...baseItems,
         { href: "/dashboard", label: "Dashboard", icon: User },
@@ -73,7 +73,7 @@ const Navbar = () => {
         { href: "/dashboard/bookings", label: "My Bookings", icon: null },
         { href: "/services", label: "Find Services", icon: null },
       ];
-    } else if (isProvider()) {
+    } else if (auth.isProvider) {
       return [
         ...baseItems,
         { href: "/provider-dashboard", label: "Dashboard", icon: User },
@@ -148,7 +148,7 @@ const Navbar = () => {
             </ClientOnly>
 
             {/* Notifications (if authenticated) */}
-            {isAuthenticated && (
+            {auth.isAuthenticated && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -162,7 +162,7 @@ const Navbar = () => {
             )}
 
             {/* Authentication */}
-            {isAuthenticated ? (
+            {auth.isAuthenticated ? (
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -171,11 +171,11 @@ const Navbar = () => {
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
+                      {auth.user?.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <span className="hidden sm:block text-gray-700 dark:text-gray-300">
-                    {user?.name}
+                    {auth.user?.name}
                   </span>
                 </Button>
 
@@ -184,13 +184,13 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
                     <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user?.name}
+                        {auth.user?.name}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {user?.email}
+                        {auth.user?.email}
                       </p>
                       <span className="inline-block mt-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                        {user?.role}
+                        {auth.user?.role}
                       </span>
                     </div>
 

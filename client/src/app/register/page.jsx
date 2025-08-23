@@ -1263,9 +1263,9 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full py-3 text-lg"
-              disabled={isLoading}
+              disabled={auth.isLoading}
             >
-              {isLoading ? (
+              {auth.isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Creating Account...

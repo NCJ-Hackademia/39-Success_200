@@ -118,12 +118,12 @@ export const useUserStore = create<UserState>()(
 export const useAuth = () => {
   const { user, token, isAuthenticated, isLoading } = useUserStore();
   const userRole = user?.role || null;
-  
-  return { 
-    user, 
-    token, 
-    isAuthenticated, 
-    isLoading, 
+
+  return {
+    user,
+    token,
+    isAuthenticated,
+    isLoading,
     userRole,
     // Convenience methods
     isLoggedIn: isAuthenticated,
