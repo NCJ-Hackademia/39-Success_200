@@ -16,6 +16,8 @@ import crowdfundingRoutes from "./routes/crowdfunding.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import morgan from "morgan";
+import { errorHandler, notFound } from "./middleware/errorHandler.js";
+import { requestLogger } from "./utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +27,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(morgan("dev"));
+app.use(requestLogger); // Custom request logger
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -52,14 +55,9 @@ app.get("/", (req, res) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
+app.use(notFound);
 
 // Global error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
-});
+app.use(errorHandler);
 
 export default app;

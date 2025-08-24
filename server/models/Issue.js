@@ -124,6 +124,11 @@ const issueSchema = new mongoose.Schema(
         },
       },
     ],
+    // Resolved timestamp
+    resolvedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

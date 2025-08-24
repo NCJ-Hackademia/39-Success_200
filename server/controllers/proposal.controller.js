@@ -12,10 +12,33 @@ export const createProposal = async (req, res) => {
       expirationHours = 24,
     } = req.body;
 
+    // Validate required fields
+    if (!bookingId || !proposalType || !proposedChanges) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Missing required fields: bookingId, proposalType, and proposedChanges are required",
+      });
+    }
+
+    // Validate proposal type
+    const validTypes = ["price", "schedule", "requirements", "complete"];
+    if (!validTypes.includes(proposalType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid proposal type. Must be one of: ${validTypes.join(
+          ", "
+        )}`,
+      });
+    }
+
     // Verify booking exists and user has access
     const booking = await Booking.findById(bookingId);
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
     }
 
     // Check if user is part of this booking
@@ -23,7 +46,19 @@ export const createProposal = async (req, res) => {
       booking.consumer.toString() !== req.user.id &&
       booking.provider.toString() !== req.user.id
     ) {
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({
+        success: false,
+        message: "Access denied - you are not part of this booking",
+      });
+    }
+
+    // Check if booking is in a state that allows proposals
+    const allowedStatuses = ["pending", "negotiating"];
+    if (!allowedStatuses.includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot create proposal for booking with status: ${booking.status}`,
+      });
     }
 
     // Determine who the proposal is being sent to
@@ -31,6 +66,15 @@ export const createProposal = async (req, res) => {
       booking.consumer.toString() === req.user.id
         ? booking.provider
         : booking.consumer;
+
+    // Validate expiration hours
+    if (expirationHours < 1 || expirationHours > 168) {
+      // 1 hour to 1 week
+      return res.status(400).json({
+        success: false,
+        message: "Expiration hours must be between 1 and 168 (1 week)",
+      });
+    }
 
     // Create expiration date
     const expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000);
@@ -48,13 +92,13 @@ export const createProposal = async (req, res) => {
         totalAmount: booking.totalAmount,
       },
       proposedChanges,
-      justification,
+      justification: justification || `New ${proposalType} proposal`,
       expiresAt,
       negotiationHistory: [
         {
           action: "created",
           performedBy: req.user.id,
-          message: justification,
+          message: justification || `Created ${proposalType} proposal`,
           proposalSnapshot: {
             price: proposedChanges.price || booking.totalAmount,
             scheduledDate:
@@ -81,7 +125,12 @@ export const createProposal = async (req, res) => {
       data: proposal,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error creating proposal:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
@@ -122,26 +171,46 @@ export const respondToProposal = async (req, res) => {
     const { proposalId } = req.params;
     const { action, responseMessage, counterProposal } = req.body;
 
+    // Validate action
+    if (!["accept", "reject", "counter"].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid action. Must be 'accept', 'reject', or 'counter'",
+      });
+    }
+
     // Verify proposal exists
     const proposal = await Proposal.findById(proposalId);
     if (!proposal) {
-      return res.status(404).json({ message: "Proposal not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Proposal not found",
+      });
     }
 
     // Check if user is the intended recipient
     if (proposal.proposedTo.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({
+        success: false,
+        message: "Access denied - you are not the intended recipient",
+      });
     }
 
     // Check if proposal is still valid
     if (proposal.status !== "pending") {
-      return res.status(400).json({ message: "Proposal is no longer active" });
+      return res.status(400).json({
+        success: false,
+        message: `Proposal is no longer active. Current status: ${proposal.status}`,
+      });
     }
 
     if (new Date() > proposal.expiresAt) {
       proposal.status = "expired";
       await proposal.save();
-      return res.status(400).json({ message: "Proposal has expired" });
+      return res.status(400).json({
+        success: false,
+        message: "Proposal has expired",
+      });
     }
 
     // Handle different actions
@@ -151,6 +220,13 @@ export const respondToProposal = async (req, res) => {
 
       // Update booking with accepted changes
       const booking = await Booking.findById(proposal.bookingId);
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Related booking not found",
+        });
+      }
+
       const updateData = {};
 
       if (proposal.proposedChanges.price) {
@@ -193,7 +269,14 @@ export const respondToProposal = async (req, res) => {
         performedBy: req.user.id,
         message: responseMessage || "Proposal rejected",
       });
-    } else if (action === "counter" && counterProposal) {
+    } else if (action === "counter") {
+      if (!counterProposal) {
+        return res.status(400).json({
+          success: false,
+          message: "Counter proposal data is required",
+        });
+      }
+
       // Create a new counter-proposal
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -252,7 +335,12 @@ export const respondToProposal = async (req, res) => {
       data: proposal,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error responding to proposal:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 

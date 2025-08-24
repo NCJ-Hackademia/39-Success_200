@@ -193,6 +193,16 @@ export const getConsumerBookings = async (req, res) => {
       .populate("issue", "title description location")
       .sort({ createdAt: -1 });
 
+    // Debug logging for negotiated bookings
+    console.log(`Consumer ${req.user.id} has ${bookings.length} bookings`);
+    bookings.forEach((booking, index) => {
+      if (booking.negotiationData?.isNegotiated) {
+        console.log(
+          `Consumer Booking ${index}: Negotiated - Original: ${booking.originalAmount}, Negotiated: ${booking.negotiatedAmount}, Total: ${booking.totalAmount}, Status: ${booking.status}`
+        );
+      }
+    });
+
     res.status(200).json({
       success: true,
       data: bookings,

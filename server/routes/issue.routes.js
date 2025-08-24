@@ -9,10 +9,22 @@ import {
   trackIssueView,
   enableCrowdfunding,
   disableCrowdfunding,
+  getAssignedIssuesCount,
+  acceptIssue,
+  resolveIssue,
+  sendIssueToGoverningBody,
+  testEmailService,
 } from "../controllers/issue.controller.js";
 import { authenticate, optionalAuthenticate } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// Get assigned issues count for provider
+router.get(
+  "/assigned/count",
+  authenticate(["provider"]),
+  getAssignedIssuesCount
+);
 
 // Get all issues (admin/provider can see all, consumer sees only their own)
 router.get("/", authenticate(["admin", "provider", "consumer"]), getAllIssues);
@@ -26,6 +38,12 @@ router.get(
 
 // Create new issue (consumer only)
 router.post("/", authenticate(["consumer"]), createIssue);
+
+// Accept issue (provider only)
+router.post("/:id/accept", authenticate(["provider"]), acceptIssue);
+
+// Resolve issue (provider only)
+router.post("/:id/resolve", authenticate(["provider"]), resolveIssue);
 
 // Update issue (consumer can update their own, provider can update assigned ones)
 router.put(
@@ -57,8 +75,18 @@ router.post(
 // Disable crowdfunding for an issue (consumer/admin only)
 router.post(
   "/:id/crowdfunding/disable",
-  authenticate(["admin", "consumer"]),
+  authenticate(["admin"]),
   disableCrowdfunding
 );
+
+// Send issue to governing body manually
+router.post(
+  "/:issueId/send-to-government",
+  authenticate(["admin", "consumer"]),
+  sendIssueToGoverningBody
+);
+
+// Test email service (admin only)
+router.get("/admin/test-email", authenticate(["admin"]), testEmailService);
 
 export default router;

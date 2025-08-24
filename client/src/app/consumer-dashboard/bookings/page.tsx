@@ -6,7 +6,8 @@ import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { useUserStore } from "../../../store/userStore";
 import ChatModal from "../../../components/chat/ChatModal";
-import { MessageCircle } from "lucide-react";
+import api from "../../../lib/api";
+import { MessageCircle, FileText } from "lucide-react";
 
 const ConsumerBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -14,6 +15,10 @@ const ConsumerBookings = () => {
   const [error, setError] = useState("");
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [showChat, setShowChat] = useState(false);
+  const [showProposals, setShowProposals] = useState(false);
+  const [selectedBookingForProposals, setSelectedBookingForProposals] =
+    useState(null);
+  const [proposals, setProposals] = useState([]);
   const { user } = useUserStore();
 
   useEffect(() => {
@@ -36,10 +41,12 @@ const ConsumerBookings = () => {
   const getStatusBadge = (status) => {
     const statusColors = {
       pending: "bg-yellow-100 text-yellow-800",
+      negotiating: "bg-orange-100 text-orange-800",
       confirmed: "bg-blue-100 text-blue-800",
       in_progress: "bg-purple-100 text-purple-800",
       completed: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
+      rejected: "bg-red-100 text-red-800",
     };
 
     return (
@@ -61,6 +68,56 @@ const ConsumerBookings = () => {
   const closeChat = () => {
     setShowChat(false);
     setSelectedBookingId(null);
+  };
+
+  const viewProposals = async (bookingId) => {
+    try {
+      setSelectedBookingForProposals(bookingId);
+
+      // Fetch proposals for this booking
+      const response = await api.get(`/api/proposals/booking/${bookingId}`);
+
+      if (response.data.success) {
+        setProposals(response.data.data || []);
+        setShowProposals(true);
+      } else {
+        alert("Failed to load proposals");
+      }
+    } catch (err) {
+      console.error("Error fetching proposals:", err);
+      alert(err.response?.data?.message || "Failed to load proposals");
+    }
+  };
+
+  const closeProposals = () => {
+    setShowProposals(false);
+    setSelectedBookingForProposals(null);
+    setProposals([]);
+  };
+
+  const handleProposalResponse = async (
+    proposalId,
+    action,
+    responseMessage
+  ) => {
+    try {
+      const response = await api.post(`/api/proposals/${proposalId}/respond`, {
+        action,
+        responseMessage,
+      });
+
+      if (response.data.success) {
+        alert(`Proposal ${action}ed successfully!`);
+        // Refresh proposals and bookings
+        if (selectedBookingForProposals) {
+          await viewProposals(selectedBookingForProposals);
+        }
+        await fetchBookings();
+      }
+    } catch (err) {
+      console.error(`Error ${action}ing proposal:`, err);
+      alert(err.response?.data?.message || `Failed to ${action} proposal`);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -244,17 +301,31 @@ const ConsumerBookings = () => {
 
               <div className="mt-4 pt-4 border-t flex gap-2">
                 {(booking.status === "pending" ||
+                  booking.status === "negotiating" ||
                   booking.status === "confirmed" ||
                   booking.status === "in_progress") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openChat(booking._id || booking.id)}
-                    className="flex items-center gap-2"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Chat with Provider
-                  </Button>
+                  <>
+                    {booking.status === "negotiating" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewProposals(booking._id || booking.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        View Proposals
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openChat(booking._id || booking.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Chat with Provider
+                    </Button>
+                  </>
                 )}
                 {booking.status === "completed" && !booking.rating && (
                   <Button variant="outline" size="sm" className="">
@@ -275,6 +346,123 @@ const ConsumerBookings = () => {
           bookingId={selectedBookingId}
           currentUserId={user.id}
         />
+      )}
+
+      {/* Proposals Modal */}
+      {showProposals && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Price Proposals</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={closeProposals}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              {proposals.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No proposals found for this booking.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {proposals.map((proposal) => (
+                    <Card key={proposal._id} className="border">
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="font-medium text-sm">
+                              {proposal.proposalType === "price"
+                                ? "Price Proposal"
+                                : proposal.proposalType}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              From: {proposal.proposedBy?.name || "Unknown"}
+                            </p>
+                          </div>
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              proposal.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : proposal.status === "accepted"
+                                ? "bg-green-100 text-green-800"
+                                : proposal.status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {proposal.status?.toUpperCase()}
+                          </span>
+                        </div>
+
+                        {proposal.proposedChanges?.price && (
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-green-600">
+                              Proposed Price: ₹
+                              {proposal.proposedChanges.price.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+
+                        {proposal.justification && (
+                          <div className="mb-3">
+                            <p className="text-sm text-gray-700">
+                              {proposal.justification}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="text-xs text-gray-500 mb-3">
+                          Created:{" "}
+                          {new Date(proposal.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(proposal.createdAt).toLocaleTimeString()}
+                        </div>
+
+                        {proposal.status === "pending" && (
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() =>
+                                handleProposalResponse(
+                                  proposal._id,
+                                  "accept",
+                                  "Proposal accepted"
+                                )
+                              }
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleProposalResponse(
+                                  proposal._id,
+                                  "reject",
+                                  "Thank you for your proposal, but I cannot accept this price."
+                                )
+                              }
+                              className="border-red-600 text-red-600 hover:bg-red-50"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
