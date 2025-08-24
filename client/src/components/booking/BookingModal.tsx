@@ -8,7 +8,7 @@ import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../../contexts/ToastContext";
 import { useUserStore } from "../../store/userStore";
-import { bookingAPI, issuesAPI } from "../../lib/api";
+import { bookingAPI, issuesAPI, proposalsAPI } from "../../lib/api";
 import type { Service, Issue } from "../../types";
 import {
   Calendar,
@@ -42,13 +42,16 @@ export default function BookingModal({
   const [loading, setLoading] = useState(false);
   const [loadingIssues, setLoadingIssues] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [proposedPrice, setProposedPrice] = useState<number>(0);
+  const [isNegotiating, setIsNegotiating] = useState(false);
   const { addToast } = useToast();
   const { user, isAuthenticated } = useUserStore();
 
   // Calculate total amount (you can add service fees, taxes, etc. here)
   const calculateTotalAmount = () => {
     if (!service) return 0;
-    const basePrice = service.price || 0;
+    if (isNegotiating && proposedPrice > 0) return proposedPrice;
+    const basePrice = service?.price || 0;
     // Add any additional fees here
     return basePrice;
   };
@@ -63,8 +66,10 @@ export default function BookingModal({
       setNotes("");
       setSelectedIssue("");
       setError(null);
+      setProposedPrice(service?.price || 0);
+      setIsNegotiating(false);
     }
-  }, [isOpen]);
+  }, [isOpen, service?.price]);
 
   const fetchUserIssues = async () => {
     try {
@@ -111,6 +116,10 @@ export default function BookingModal({
         throw new Error("Please select a time for the service");
       }
 
+      if (isNegotiating && (!proposedPrice || proposedPrice <= 0)) {
+        throw new Error("Please enter a valid proposed price");
+      }
+
       // Combine date and time
       const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
 
@@ -119,14 +128,15 @@ export default function BookingModal({
         throw new Error("Please select a future date and time");
       }
 
+      // First create the booking
       const bookingData = {
-        service: service.id || service._id,
+        service: service?.id || service?._id,
         provider:
-          typeof service.provider === "object"
-            ? (service.provider as any).id || (service.provider as any)._id
-            : service.provider,
+          typeof service?.provider === "object"
+            ? (service.provider as any)?.id || (service.provider as any)?._id
+            : service?.provider,
         scheduledDate: scheduledDateTime.toISOString(),
-        totalAmount: calculateTotalAmount(),
+        totalAmount: service?.price || 0, // Use original price for initial booking
         notes: notes.trim(),
         ...(selectedIssue && { issue: selectedIssue }),
       };
@@ -134,12 +144,45 @@ export default function BookingModal({
       const response = await bookingAPI.createBooking(bookingData);
 
       if (response.success) {
-        addToast({
-          type: "success",
-          message: "Booking created successfully!",
-          duration: 5000,
-        });
-        onBookingSuccess(response.data.id || (response.data as any)._id);
+        const bookingId = response.data.id || (response.data as any)._id;
+
+        // If user wants to negotiate price, create a proposal
+        if (isNegotiating && proposedPrice !== (service?.price || 0)) {
+          try {
+            await proposalsAPI.createProposal({
+              bookingId,
+              proposalType: "price",
+              proposedChanges: {
+                price: proposedPrice,
+                totalAmount: proposedPrice,
+              },
+              justification: `I would like to propose $${proposedPrice} for this service. ${
+                notes ? `Additional notes: ${notes}` : ""
+              }`,
+            });
+
+            addToast({
+              type: "success",
+              message: "Booking created and price proposal sent!",
+              duration: 5000,
+            });
+          } catch (proposalError: any) {
+            console.error("Error creating proposal:", proposalError);
+            addToast({
+              type: "warning",
+              message: "Booking created but failed to send price proposal",
+              duration: 5000,
+            });
+          }
+        } else {
+          addToast({
+            type: "success",
+            message: "Booking created successfully!",
+            duration: 5000,
+          });
+        }
+
+        onBookingSuccess(bookingId);
         onClose();
       } else {
         throw new Error(response.message || "Failed to create booking");
@@ -193,24 +236,97 @@ export default function BookingModal({
           {/* Service Summary */}
           <Card className="border">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg">{service.name}</CardTitle>
+              <CardTitle className="text-lg">{service?.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-gray-600 dark:text-gray-300">
-                {service.description}
+                {service?.description}
               </p>
 
-              {service.provider && typeof service.provider === "object" && (
+              {service?.provider && typeof service.provider === "object" && (
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                   <User className="h-4 w-4 mr-2" />
-                  <span>Provider: {service.provider.name}</span>
+                  <span>Provider: {service.provider?.name}</span>
                 </div>
               )}
 
               <div className="flex items-center text-lg font-semibold text-green-600">
                 <DollarSign className="h-5 w-5 mr-1" />
-                <span>₹{calculateTotalAmount().toLocaleString()}</span>
+                <span>₹{(service?.price || 0).toLocaleString()}</span>
+                {isNegotiating && (
+                  <span className="text-blue-600 ml-2">
+                    → ₹{proposedPrice.toLocaleString()}
+                  </span>
+                )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Price Negotiation Section */}
+          <Card className="border">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center">
+                <DollarSign className="h-5 w-5 mr-2" />
+                Pricing Options
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Button
+                  type="button"
+                  variant={!isNegotiating ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsNegotiating(false)}
+                  className="flex items-center"
+                >
+                  <span>Book at Listed Price</span>
+                  <span className="ml-2 font-semibold">
+                    ₹{(service?.price || 0).toLocaleString()}
+                  </span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={isNegotiating ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsNegotiating(true)}
+                  className="flex items-center"
+                >
+                  <span>Propose My Price</span>
+                </Button>
+              </div>
+
+              {isNegotiating && (
+                <div className="space-y-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Your Proposed Price *
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        type="number"
+                        value={proposedPrice}
+                        onChange={(e) =>
+                          setProposedPrice(parseFloat(e.target.value) || 0)
+                        }
+                        placeholder="Enter your price"
+                        className="pl-10"
+                        min="1"
+                        step="0.01"
+                        required={isNegotiating}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Original price: ₹{(service?.price || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-sm text-blue-700 dark:text-blue-300">
+                    💡 The provider will receive your booking request with your
+                    proposed price. They can accept, reject, or negotiate
+                    further.
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -347,8 +463,10 @@ export default function BookingModal({
                   </>
                 ) : !isAuthenticated ? (
                   "Please Log In"
+                ) : isNegotiating ? (
+                  `Propose ₹${proposedPrice.toLocaleString()}`
                 ) : (
-                  `Book for ₹${calculateTotalAmount().toLocaleString()}`
+                  `Book for ₹${(service?.price || 0).toLocaleString()}`
                 )}
               </Button>
             </div>

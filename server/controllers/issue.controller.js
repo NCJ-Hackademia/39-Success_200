@@ -1,5 +1,30 @@
 import Issue from "../models/Issue.js";
 
+export const getAssignedIssuesCount = async (req, res) => {
+  try {
+    if (req.user.role !== "provider") {
+      return res
+        .status(403)
+        .json({ error: "Only providers can access assigned issues count" });
+    }
+
+    const count = await Issue.countDocuments({
+      assignedProvider: req.user.id,
+    });
+
+    res.json({
+      success: true,
+      data: { count },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to get assigned issues count",
+      details: error.message,
+    });
+  }
+};
+
 export const getAllIssues = async (req, res) => {
   try {
     let filter = {};
@@ -7,6 +32,14 @@ export const getAllIssues = async (req, res) => {
     // If consumer, only show their own issues
     if (req.user.role === "consumer") {
       filter.consumer = req.user.id;
+    }
+
+    // If provider, show available issues (open/unassigned) or assigned to them
+    if (req.user.role === "provider") {
+      filter.$or = [
+        { status: "open", assignedProvider: null }, // Unassigned open issues
+        { assignedProvider: req.user.id }, // Issues assigned to this provider
+      ];
     }
 
     // Pagination parameters
@@ -19,9 +52,19 @@ export const getAllIssues = async (req, res) => {
     const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
     const sort = { [sortBy]: sortOrder };
 
-    // Status filter
-    if (req.query.status) {
-      filter.status = req.query.status;
+    // Status filter (for admin and general filtering)
+    if (
+      req.query.status &&
+      req.user.role !== "provider" &&
+      req.user.role !== "consumer"
+    ) {
+      // Handle comma-separated status values
+      const statusArray = req.query.status.split(",").map((s) => s.trim());
+      if (statusArray.length > 1) {
+        filter.status = { $in: statusArray };
+      } else {
+        filter.status = req.query.status;
+      }
     }
 
     // Category filter
@@ -145,32 +188,94 @@ export const createIssue = async (req, res) => {
 
 export const updateIssue = async (req, res) => {
   try {
+    console.log(
+      `Update issue request for ID: ${req.params.id} by user: ${req.user.id} (${req.user.role})`
+    );
+    console.log("Update data:", req.body);
+
     const issue = await Issue.findById(req.params.id);
 
     if (!issue) {
-      return res.status(404).json({ message: "Issue not found" });
+      console.log(`Issue not found: ${req.params.id}`);
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
     }
+
+    console.log(
+      `Issue found - Status: ${issue.status}, AssignedProvider: ${issue.assignedProvider}, Consumer: ${issue.consumer}`
+    );
 
     // Check permissions
     if (
       req.user.role === "consumer" &&
       issue.consumer.toString() !== req.user.id
     ) {
-      return res.status(403).json({ message: "Access denied" });
+      console.log(
+        `Permission denied - consumer ${req.user.id} trying to update issue owned by ${issue.consumer}`
+      );
+      return res.status(403).json({
+        success: false,
+        message: "Access denied - consumers can only update their own issues",
+      });
     }
 
     if (
       req.user.role === "provider" &&
       issue.assignedProvider?.toString() !== req.user.id
     ) {
-      return res.status(403).json({ message: "Access denied" });
+      console.log(
+        `Permission denied - provider ${req.user.id} trying to update issue assigned to ${issue.assignedProvider}`
+      );
+      return res.status(403).json({
+        success: false,
+        message:
+          "Access denied - providers can only update issues assigned to them",
+      });
+    }
+
+    // Validate status transitions
+    const validTransitions = {
+      open: ["in_progress", "closed"],
+      in_progress: ["resolved", "closed"],
+      resolved: ["closed"],
+      closed: [],
+    };
+
+    if (
+      req.body.status &&
+      !validTransitions[issue.status]?.includes(req.body.status)
+    ) {
+      console.log(
+        `Invalid status transition from ${issue.status} to ${req.body.status}`
+      );
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status transition from ${issue.status} to ${req.body.status}`,
+      });
+    }
+
+    // If provider is resolving the issue, allow it
+    if (
+      req.user.role === "provider" &&
+      req.body.status === "resolved" &&
+      issue.assignedProvider?.toString() === req.user.id
+    ) {
+      // This is allowed - provider resolving their assigned issue
+      console.log("Provider resolving their assigned issue");
     }
 
     const updatedIssue = await Issue.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    );
+    )
+      .populate("consumer", "name email")
+      .populate("assignedProvider", "name email")
+      .populate("category", "name description icon");
+
+    console.log("Issue updated successfully");
 
     res.status(200).json({
       success: true,
@@ -178,7 +283,12 @@ export const updateIssue = async (req, res) => {
       data: updatedIssue,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error updating issue:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
@@ -394,6 +504,136 @@ export const disableCrowdfunding = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to disable crowdfunding",
+      error: error.message,
+    });
+  }
+};
+
+export const acceptIssue = async (req, res) => {
+  try {
+    console.log(
+      `Accept issue request for ID: ${req.params.id} by user: ${req.user.id} (${req.user.role})`
+    );
+
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      console.log(`Issue not found: ${req.params.id}`);
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    console.log(
+      `Issue found - Status: ${issue.status}, AssignedProvider: ${issue.assignedProvider}`
+    );
+
+    // Check if issue is available for acceptance
+    if (issue.status !== "open") {
+      console.log(`Issue not available - Status: ${issue.status}`);
+      return res.status(400).json({
+        success: false,
+        message:
+          "Issue is not available for acceptance. Current status: " +
+          issue.status,
+      });
+    }
+
+    if (issue.assignedProvider) {
+      console.log(`Issue already assigned to: ${issue.assignedProvider}`);
+      return res.status(400).json({
+        success: false,
+        message: "Issue is already assigned to another provider",
+      });
+    }
+
+    // Accept the issue by assigning it to the provider and changing status
+    issue.assignedProvider = req.user.id;
+    issue.status = "in_progress";
+
+    console.log(
+      `Accepting issue - Setting assignedProvider to: ${req.user.id}`
+    );
+
+    const updatedIssue = await issue.save();
+
+    // Populate the assigned provider details
+    await updatedIssue.populate("assignedProvider", "name email");
+    await updatedIssue.populate("consumer", "name email");
+    await updatedIssue.populate("category", "name description icon");
+
+    console.log(`Issue accepted successfully: ${updatedIssue._id}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Issue accepted successfully",
+      data: updatedIssue,
+    });
+  } catch (error) {
+    console.error("Error accepting issue:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to accept issue",
+      error: error.message,
+    });
+  }
+};
+
+export const resolveIssue = async (req, res) => {
+  try {
+    console.log(
+      `Resolve issue request for ID: ${req.params.id} by user: ${req.user.id} (${req.user.role})`
+    );
+
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Check if user is the assigned provider
+    if (issue.assignedProvider?.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the assigned provider can resolve this issue",
+      });
+    }
+
+    // Check if issue is in progress
+    if (issue.status !== "in_progress") {
+      return res.status(400).json({
+        success: false,
+        message: `Issue cannot be resolved. Current status: ${issue.status}`,
+      });
+    }
+
+    // Resolve the issue
+    issue.status = "resolved";
+    issue.resolvedAt = new Date();
+
+    const updatedIssue = await issue.save();
+
+    // Populate details
+    await updatedIssue.populate("assignedProvider", "name email");
+    await updatedIssue.populate("consumer", "name email");
+    await updatedIssue.populate("category", "name description icon");
+
+    console.log(`Issue resolved successfully: ${updatedIssue._id}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Issue resolved successfully",
+      data: updatedIssue,
+    });
+  } catch (error) {
+    console.error("Error resolving issue:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to resolve issue",
       error: error.message,
     });
   }

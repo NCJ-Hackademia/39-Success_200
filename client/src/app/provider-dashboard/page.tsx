@@ -69,11 +69,20 @@ export default function ProviderDashboardPage() {
         const profileResponse = await api.get("/api/provider/profile/me");
         const profile = profileResponse.data.data || {};
 
+        // Fetch assigned issues count
+        let assignedIssuesCount = 0;
+        try {
+          const assignedResponse = await api.get("/api/issues/assigned/count");
+          assignedIssuesCount = assignedResponse.data.data?.count || 0;
+        } catch (issuesError) {
+          console.warn("Could not fetch assigned issues count:", issuesError);
+        }
+
         setStats({
           ...providerStats,
           isVerified: profile.verification?.isVerified || false,
           totalReviews: providerStats.completedBookings, // Assuming each completed booking has a review
-          assignedIssues: 0, // TODO: Fetch from API
+          assignedIssues: assignedIssuesCount,
         });
       } catch (profileError) {
         console.warn("Could not fetch provider profile:", profileError);

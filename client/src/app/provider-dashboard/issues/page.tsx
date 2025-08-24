@@ -10,6 +10,13 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../../components/ui/dialog";
 import { ProtectedRoute } from "../../../components/ProtectedRoute";
 import api from "../../../lib/api";
 import {
@@ -22,6 +29,7 @@ import {
   ArrowLeft,
   User,
   Tag,
+  DollarSign,
 } from "lucide-react";
 
 interface Issue {
@@ -30,14 +38,15 @@ interface Issue {
   description: string;
   status: "open" | "assigned" | "in_progress" | "resolved" | "closed";
   priority: "low" | "medium" | "high" | "urgent";
-  location: {
+  estimatedCost?: number;
+  location?: {
     address: string;
     coordinates?: {
       latitude: number;
       longitude: number;
     };
   };
-  consumer: {
+  consumer?: {
     _id: string;
     name: string;
     email: string;
@@ -47,7 +56,7 @@ interface Issue {
     name: string;
     email: string;
   };
-  category: {
+  category?: {
     _id: string;
     name: string;
     description: string;
@@ -63,15 +72,19 @@ export default function ProviderIssuesPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingIssue, setUpdatingIssue] = useState<string | null>(null);
 
+  // Price proposal modal state
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [proposedPrice, setProposedPrice] = useState<number>(0);
+
   const fetchProviderIssues = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch all available issues for providers (unassigned issues)
+      // Fetch all available issues for providers (open/unassigned and in_progress issues assigned to this provider)
       const response = await api.get("/api/issues", {
         params: {
-          status: "open,assigned", // Get both open and assigned issues
           limit: 50,
         },
       });
@@ -87,18 +100,52 @@ export default function ProviderIssuesPage() {
     }
   };
 
-  const handleAcceptIssue = async (issueId: string) => {
-    try {
-      setUpdatingIssue(issueId);
+  const handleAcceptIssue = async (issue: Issue) => {
+    setSelectedIssue(issue);
+    setProposedPrice(issue.estimatedCost || 0);
+    setShowPriceModal(true);
+  };
 
-      const response = await api.patch(`/api/issues/${issueId}`, {
-        status: "assigned",
-        assignedProvider: "current_user_id", // This should be handled by the backend
-      });
+  const handleSubmitPriceProposal = async () => {
+    if (!selectedIssue) return;
+
+    if (proposedPrice <= 0) {
+      alert("Please enter a valid price");
+      return;
+    }
+
+    try {
+      setUpdatingIssue(selectedIssue._id);
+
+      // Use the dedicated accept endpoint
+      const response = await api.post(
+        `/api/issues/${selectedIssue._id}/accept`
+      );
 
       if (response.data.success) {
+        const acceptedIssue = response.data.data;
+
+        // Update the estimated cost separately if needed and if the issue is now assigned to this provider
+        if (
+          proposedPrice !== selectedIssue.estimatedCost &&
+          acceptedIssue.assignedProvider._id
+        ) {
+          try {
+            await api.patch(`/api/issues/${selectedIssue._id}`, {
+              estimatedCost: proposedPrice,
+            });
+          } catch (updateError) {
+            console.warn("Could not update estimated cost:", updateError);
+            // Don't fail the whole operation if this update fails
+          }
+        }
+
         // Refresh the issues list
         await fetchProviderIssues();
+        setShowPriceModal(false);
+        setSelectedIssue(null);
+        setProposedPrice(0);
+        alert("Issue accepted successfully!");
       }
     } catch (err: any) {
       console.error("Error accepting issue:", err);
@@ -112,13 +159,12 @@ export default function ProviderIssuesPage() {
     try {
       setUpdatingIssue(issueId);
 
-      const response = await api.patch(`/api/issues/${issueId}`, {
-        status: "resolved",
-      });
+      const response = await api.post(`/api/issues/${issueId}/resolve`);
 
       if (response.data.success) {
         // Refresh the issues list
         await fetchProviderIssues();
+        alert("Issue resolved successfully!");
       }
     } catch (err: any) {
       console.error("Error resolving issue:", err);
@@ -282,25 +328,33 @@ export default function ProviderIssuesPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <User className="h-4 w-4" />
-                        <span>{issue.consumer.name}</span>
+                        <span>{issue.consumer?.name || "Unknown User"}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <MapPin className="h-4 w-4" />
                         <span className="truncate">
-                          {issue.location.address}
+                          {issue.location?.address || "Location not specified"}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Tag className="h-4 w-4" />
-                        <span>{issue.category.name}</span>
+                        <span>{issue.category?.name || "Uncategorized"}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Calendar className="h-4 w-4" />
                         <span>
                           {new Date(issue.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-medium">
+                          {issue.estimatedCost
+                            ? `₹${issue.estimatedCost.toLocaleString()}`
+                            : "Price not set"}
                         </span>
                       </div>
                     </div>
@@ -310,7 +364,7 @@ export default function ProviderIssuesPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => handleAcceptIssue(issue._id)}
+                          onClick={() => handleAcceptIssue(issue)}
                           disabled={updatingIssue === issue._id}
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
@@ -357,6 +411,89 @@ export default function ProviderIssuesPage() {
             </div>
           )}
         </div>
+
+        {/* Price Proposal Modal */}
+        <Dialog open={showPriceModal} onOpenChange={setShowPriceModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Propose Your Price</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                  {selectedIssue?.title}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  {selectedIssue?.description?.slice(0, 100)}...
+                </p>
+              </div>
+
+              {selectedIssue?.estimatedCost && (
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Current estimated cost: ₹
+                    {selectedIssue.estimatedCost.toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="proposedPrice"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Your Proposed Price (₹)
+                </label>
+                <Input
+                  id="proposedPrice"
+                  type="number"
+                  min="1"
+                  value={proposedPrice}
+                  onChange={(e) => setProposedPrice(Number(e.target.value))}
+                  placeholder="Enter your price"
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => {
+                    setShowPriceModal(false);
+                    setSelectedIssue(null);
+                    setProposedPrice(0);
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  size="default"
+                  onClick={handleSubmitPriceProposal}
+                  disabled={
+                    proposedPrice <= 0 || updatingIssue === selectedIssue?._id
+                  }
+                  className="flex-1"
+                >
+                  {updatingIssue === selectedIssue?._id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Accepting...
+                    </>
+                  ) : (
+                    <>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Accept for ₹{proposedPrice.toLocaleString()}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   );
