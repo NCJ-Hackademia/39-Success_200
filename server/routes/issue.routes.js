@@ -12,6 +12,8 @@ import {
   getAssignedIssuesCount,
   acceptIssue,
   resolveIssue,
+  sendIssueToGoverningBody,
+  testEmailService,
 } from "../controllers/issue.controller.js";
 import { authenticate, optionalAuthenticate } from "../middleware/auth.js";
 
@@ -76,5 +78,15 @@ router.post(
   authenticate(["admin"]),
   disableCrowdfunding
 );
+
+// Send issue to governing body manually
+router.post(
+  "/:issueId/send-to-government",
+  authenticate(["admin", "consumer"]),
+  sendIssueToGoverningBody
+);
+
+// Test email service (admin only)
+router.get("/admin/test-email", authenticate(["admin"]), testEmailService);
 
 export default router;

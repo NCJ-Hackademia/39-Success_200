@@ -1,4 +1,5 @@
 import Issue from "../models/Issue.js";
+import emailService from "../services/email.service.js";
 
 export const getAssignedIssuesCount = async (req, res) => {
   try {
@@ -176,10 +177,52 @@ export const createIssue = async (req, res) => {
 
     await issue.save();
 
+    // Populate the issue with category and consumer information for email
+    const populatedIssue = await Issue.findById(issue._id)
+      .populate("category")
+      .populate("consumer");
+
+    // Send email to governing body if priority is high or urgent
+    if (priority === "high" || priority === "urgent") {
+      try {
+        await emailService.sendIssueToGoverningBody(
+          populatedIssue,
+          populatedIssue.consumer,
+          populatedIssue.category
+        );
+        console.log(`High priority issue email sent for issue: ${issue._id}`);
+      } catch (emailError) {
+        console.error(
+          "Failed to send issue email to governing body:",
+          emailError
+        );
+        // Continue with the response even if email fails
+      }
+    }
+
+    // Send confirmation email to the reporter
+    try {
+      await emailService.sendConfirmationToReporter(
+        populatedIssue,
+        populatedIssue.consumer,
+        populatedIssue.category
+      );
+      console.log(
+        `Confirmation email sent to reporter for issue: ${issue._id}`
+      );
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+      // Continue with the response even if email fails
+    }
+
     res.status(201).json({
       success: true,
       message: "Issue created successfully",
       data: issue,
+      emailStatus: {
+        governingBodyNotified: priority === "high" || priority === "urgent",
+        confirmationSent: true,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -634,6 +677,127 @@ export const resolveIssue = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to resolve issue",
+      error: error.message,
+    });
+  }
+};
+
+// Send issue to governing body manually (for admins or high-priority escalation)
+export const sendIssueToGoverningBody = async (req, res) => {
+  try {
+    const { issueId } = req.params;
+    const { message, urgent = false } = req.body;
+
+    // Check if user has permission (admin or issue owner)
+    if (req.user.role !== "admin" && req.user.role !== "consumer") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only admins or issue reporters can send issues to governing body",
+      });
+    }
+
+    const issue = await Issue.findById(issueId)
+      .populate("category")
+      .populate("consumer");
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Check if consumer is trying to send their own issue
+    if (
+      req.user.role === "consumer" &&
+      issue.consumer._id.toString() !== req.user.id
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only send your own issues to governing body",
+      });
+    }
+
+    // If urgent flag is set, temporarily update priority for email template
+    const originalPriority = issue.priority;
+    if (urgent) {
+      issue.priority = "urgent";
+    }
+
+    try {
+      const emailResult = await emailService.sendIssueToGoverningBody(
+        issue,
+        issue.consumer,
+        issue.category
+      );
+
+      // Restore original priority
+      issue.priority = originalPriority;
+
+      // Log this action in the issue (you might want to add a history field)
+      console.log(
+        `Issue ${issueId} manually sent to governing body by user ${req.user.id}`
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Issue successfully sent to governing body",
+        data: {
+          issueId: issue._id,
+          emailId: emailResult.messageId,
+          sentAt: new Date(),
+          sentBy: req.user.id,
+          isUrgent: urgent,
+          customMessage: message,
+        },
+      });
+    } catch (emailError) {
+      console.error("Failed to send issue to governing body:", emailError);
+      res.status(500).json({
+        success: false,
+        message: "Failed to send issue to governing body",
+        error: emailError.message,
+      });
+    }
+  } catch (error) {
+    console.error("Error in sendIssueToGoverningBody:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Test email service connection
+export const testEmailService = async (req, res) => {
+  try {
+    // Only allow admins to test email service
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can test email service",
+      });
+    }
+
+    const isConnected = await emailService.testConnection();
+
+    res.status(200).json({
+      success: true,
+      message: isConnected
+        ? "Email service is working properly"
+        : "Email service connection failed",
+      data: {
+        connected: isConnected,
+        testedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error("Error testing email service:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to test email service",
       error: error.message,
     });
   }
