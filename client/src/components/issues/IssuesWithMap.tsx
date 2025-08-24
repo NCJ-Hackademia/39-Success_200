@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -19,6 +20,7 @@ import { issuesAPI, categoriesAPI } from "../../lib/api";
 import type { Issue } from "../../types";
 
 const IssuesWithMap: React.FC = () => {
+  const router = useRouter();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,8 +101,37 @@ const IssuesWithMap: React.FC = () => {
   });
 
   const handleIssueSelect = (issue: Issue) => {
-    // Handle issue selection (e.g., open details modal)
-    console.log("Selected issue:", issue);
+    // Navigate to issue details page
+    router.push(`/forum/issue/${issue._id || issue.id}`);
+  };
+
+  const handleUpvote = async (issue: Issue, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent card click
+
+    try {
+      const response = await issuesAPI.upvoteIssue(issue._id || issue.id);
+      if (response.success) {
+        // Update the issue in the local state
+        setIssues((prevIssues) =>
+          prevIssues.map((prevIssue) =>
+            (prevIssue._id || prevIssue.id) === (issue._id || issue.id)
+              ? {
+                  ...prevIssue,
+                  upvotes: response.data.upvotes,
+                  upvotedBy: response.data.hasUpvoted
+                    ? [...(prevIssue.upvotedBy || []), "current-user"]
+                    : (prevIssue.upvotedBy || []).filter(
+                        (id) => id !== "current-user"
+                      ),
+                }
+              : prevIssue
+          )
+        );
+      }
+    } catch (error: any) {
+      console.error("Error upvoting issue:", error);
+      alert(error.response?.data?.message || "Failed to upvote issue");
+    }
   };
 
   const handleIssueSubmitted = (issue: any) => {
@@ -183,7 +214,7 @@ const IssuesWithMap: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
-              <span>👍 {issue.upvotes || 0} upvotes</span>
+              <span>� {issue.viewsCount || 0} views</span>
             </div>
           </div>
 
@@ -196,11 +227,14 @@ const IssuesWithMap: React.FC = () => {
             >
               View Details
             </Button>
-            {issue.status === "open" && (
-              <Button variant="default" size="sm" className="">
-                Upvote
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className=""
+              onClick={(e) => handleUpvote(issue, e)}
+            >
+              👍 {issue.upvotes || 0}
+            </Button>
           </div>
         </CardContent>
       </Card>

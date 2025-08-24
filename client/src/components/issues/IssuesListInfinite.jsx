@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { issuesAPI } from "../../lib/api";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -8,18 +9,27 @@ import { useUserStore } from "../../store/userStore";
 import useInfiniteScroll from "../../hooks/useInfiniteScroll";
 
 const IssueCard = ({ issue, onUpvote, user }) => {
+  const router = useRouter();
   const [isUpvoting, setIsUpvoting] = useState(false);
   const [upvotes, setUpvotes] = useState(issue.upvotes || 0);
   const [hasUpvoted, setHasUpvoted] = useState(
     issue.upvotedBy?.includes(user?.id) || false
   );
 
-  const handleUpvote = async () => {
-    if (!user) return;
+  const handleUpvote = async (e) => {
+    e.stopPropagation(); // Prevent card click when upvoting
+
+    if (!user) {
+      alert("Please log in to upvote this issue");
+      return;
+    }
 
     setIsUpvoting(true);
     try {
+      console.log("Upvoting issue:", issue._id || issue.id);
       const response = await issuesAPI.upvoteIssue(issue._id || issue.id);
+      console.log("Upvote response:", response);
+
       if (response.success) {
         setUpvotes(response.data.upvotes);
         setHasUpvoted(response.data.hasUpvoted);
@@ -29,9 +39,20 @@ const IssueCard = ({ issue, onUpvote, user }) => {
       }
     } catch (error) {
       console.error("Error upvoting issue:", error);
+      console.error("Error details:", error.response?.data);
+      alert(error.response?.data?.message || "Failed to upvote issue");
     } finally {
       setIsUpvoting(false);
     }
+  };
+
+  const handleViewDetails = (e) => {
+    e.stopPropagation(); // Prevent card click
+    router.push(`/forum/issue/${issue._id || issue.id}`);
+  };
+
+  const handleCardClick = () => {
+    router.push(`/forum/issue/${issue._id || issue.id}`);
   };
 
   const getStatusBadge = (status) => {
@@ -83,23 +104,37 @@ const IssueCard = ({ issue, onUpvote, user }) => {
   };
 
   return (
-    <Card className="p-6 hover:shadow-lg transition-shadow">
+    <Card
+      className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-2">{issue.title}</h3>
+          <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">
+            {issue.title}
+          </h3>
           <p className="text-gray-600 mb-3 line-clamp-3">{issue.description}</p>
         </div>
 
-        {/* Upvote Button */}
-        <div className="flex flex-col items-center ml-4">
+        {/* Action Buttons */}
+        <div className="flex flex-col items-center ml-4 gap-2">
           <Button
             onClick={handleUpvote}
             disabled={isUpvoting || !user}
             variant={hasUpvoted ? "default" : "outline"}
             size="sm"
-            className="mb-1"
+            className="min-w-[70px]"
           >
-            {hasUpvoted ? "👍" : "👍"} {upvotes}
+            {isUpvoting ? "..." : hasUpvoted ? "👍" : "👍"} {upvotes}
+          </Button>
+
+          <Button
+            onClick={handleViewDetails}
+            variant="outline"
+            size="sm"
+            className="min-w-[70px] text-xs"
+          >
+            View Details
           </Button>
         </div>
       </div>
@@ -180,9 +215,13 @@ const IssueCard = ({ issue, onUpvote, user }) => {
 
       {/* Footer */}
       <div className="flex justify-between items-center text-sm text-gray-500 pt-4 border-t">
-        <span>Reported on {formatDate(issue.createdAt)}</span>
+        <div className="flex items-center gap-4">
+          <span>📅 {formatDate(issue.createdAt)}</span>
+          <span>👀 {issue.viewsCount || 0} views</span>
+          <span>💬 {issue.commentsCount || 0} comments</span>
+        </div>
         {issue.updatedAt !== issue.createdAt && (
-          <span>Updated on {formatDate(issue.updatedAt)}</span>
+          <span>Updated {formatDate(issue.updatedAt)}</span>
         )}
       </div>
     </Card>

@@ -76,19 +76,36 @@ export default function IssueDetailPage() {
   }, [issueId]);
 
   const handleUpvoteIssue = async () => {
-    if (!issue) return;
+    if (!issue) {
+      console.log("No issue found");
+      return;
+    }
+
+    if (!user) {
+      console.log("No user authenticated");
+      alert("Please log in to upvote this issue");
+      return;
+    }
 
     try {
+      console.log("Attempting to upvote issue:", issue._id);
       const response = await issuesAPI.upvoteIssue(issue._id!);
+      console.log("Upvote response:", response);
+
       setIssue({
         ...issue,
         upvotes: response.data.upvotes,
         upvotedBy: response.data.hasUpvoted
-          ? [...issue.upvotedBy, user!.id]
-          : issue.upvotedBy.filter((id) => id !== user!.id),
+          ? [...issue.upvotedBy, user.id]
+          : issue.upvotedBy.filter((id) => id !== user.id),
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error upvoting issue:", err);
+      console.error("Error details:", err.response?.data);
+      alert(
+        err.response?.data?.message ||
+          "Failed to upvote issue. Please try again."
+      );
     }
   };
 
@@ -162,12 +179,16 @@ export default function IssueDetailPage() {
   if (error || !issue) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
-          <p className="text-red-600">{error || "Issue not found"}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-red-800 dark:text-red-300 mb-2">
+            Error
+          </h3>
+          <p className="text-red-600 dark:text-red-400">
+            {error || "Issue not found"}
+          </p>
           <button
             onClick={() => router.push("/forum")}
-            className="mt-4 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="mt-4 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
           >
             Back to Forum
           </button>
@@ -212,14 +233,14 @@ export default function IssueDetailPage() {
       {/* Back Button */}
       <button
         onClick={() => router.push("/forum")}
-        className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+        className="mb-6 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Forum
       </button>
 
       {/* Issue Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
         <div className="flex flex-col lg:flex-row justify-between items-start mb-4">
           <div className="flex-1 mb-4 lg:mb-0">
             <div className="flex items-center gap-2 mb-3">
@@ -245,14 +266,16 @@ export default function IssueDetailPage() {
               )}
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
               {issue.title}
             </h1>
 
-            <p className="text-gray-600 mb-4">{issue.description}</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {issue.description}
+            </p>
 
             {/* Issue Metadata */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <Eye className="h-4 w-4" />
                 {issue.viewsCount || 0} views
@@ -281,7 +304,7 @@ export default function IssueDetailPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-md ${
                 hasUserUpvoted
                   ? "bg-blue-600 text-white"
-                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  : "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               <Heart
@@ -304,12 +327,12 @@ export default function IssueDetailPage() {
 
         {/* Crowdfunding Progress */}
         {crowdfunding && (
-          <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+          <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-purple-900">
+              <h3 className="font-semibold text-purple-900 dark:text-purple-300">
                 Crowdfunding Progress
               </h3>
-              <span className="text-sm text-purple-700">
+              <span className="text-sm text-purple-700 dark:text-purple-400">
                 {crowdfunding.daysLeft !== null
                   ? `${crowdfunding.daysLeft} days left`
                   : "No deadline"}
@@ -317,7 +340,7 @@ export default function IssueDetailPage() {
             </div>
 
             <div className="mb-3">
-              <div className="flex justify-between text-sm mb-1">
+              <div className="flex justify-between text-sm mb-1 text-gray-700 dark:text-gray-300">
                 <span>
                   ₹{crowdfunding.crowdfunding.raisedAmount.toLocaleString()}{" "}
                   raised
@@ -327,13 +350,13 @@ export default function IssueDetailPage() {
                   goal
                 </span>
               </div>
-              <div className="w-full bg-purple-200 rounded-full h-3">
+              <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-3">
                 <div
-                  className="bg-purple-600 h-3 rounded-full"
+                  className="bg-purple-600 dark:bg-purple-500 h-3 rounded-full"
                   style={{ width: `${crowdfunding.progressPercentage}%` }}
                 ></div>
               </div>
-              <div className="flex justify-between text-xs text-purple-600 mt-1">
+              <div className="flex justify-between text-xs text-purple-600 dark:text-purple-400 mt-1">
                 <span>{crowdfunding.progressPercentage}% funded</span>
                 <span>
                   {crowdfunding.crowdfunding.contributors.length} contributors
@@ -344,7 +367,7 @@ export default function IssueDetailPage() {
             {/* Recent Contributors */}
             {crowdfunding.recentTransactions.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-purple-900 mb-2">
+                <h4 className="text-sm font-medium text-purple-900 dark:text-purple-300 mb-2">
                   Recent Contributors
                 </h4>
                 <div className="space-y-2">
@@ -352,12 +375,12 @@ export default function IssueDetailPage() {
                     .slice(0, 3)
                     .map((transaction, index) => (
                       <div key={index} className="flex justify-between text-sm">
-                        <span className="text-purple-700">
+                        <span className="text-purple-700 dark:text-purple-400">
                           {transaction.isAnonymous
                             ? "Anonymous"
                             : transaction.contributor?.name || "Anonymous"}
                         </span>
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           ₹{transaction.amount}
                         </span>
                       </div>
@@ -370,19 +393,19 @@ export default function IssueDetailPage() {
       </div>
 
       {/* Comments Section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h2 className="text-xl font-semibold dark:text-white mb-4">
           Discussion ({comments.length})
         </h2>
 
         {/* Comment Form */}
         <div className="mb-6">
           {replyToComment && (
-            <div className="mb-2 p-2 bg-blue-50 rounded text-sm">
+            <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
               Replying to a comment...
               <button
                 onClick={() => setReplyToComment(null)}
-                className="ml-2 text-blue-600 hover:text-blue-800"
+                className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Cancel
               </button>
@@ -399,7 +422,7 @@ export default function IssueDetailPage() {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSubmitComment()}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
             <button
               onClick={handleSubmitComment}
@@ -414,7 +437,7 @@ export default function IssueDetailPage() {
         {/* Comments List */}
         <div className="space-y-4">
           {comments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <MessageCircle className="mx-auto h-8 w-8 mb-2" />
               <p>No comments yet. Be the first to start the discussion!</p>
             </div>
@@ -422,49 +445,53 @@ export default function IssueDetailPage() {
             comments.map((comment) => (
               <div
                 key={comment._id}
-                className="border-l-2 border-gray-200 pl-4"
+                className="border-l-2 border-gray-200 dark:border-gray-600 pl-4"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium">
+                    <span className="font-medium dark:text-white">
                       {typeof comment.author === "object"
                         ? comment.author.name
                         : "User"}
                     </span>
                     {comment.isProviderResponse && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                         Provider
                       </span>
                     )}
                     {comment.isMarkedAsSolution && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Solution
                       </span>
                     )}
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(comment.createdAt).toLocaleString()}
                     </span>
                     {comment.isEdited && (
-                      <span className="text-xs text-gray-400">(edited)</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        (edited)
+                      </span>
                     )}
                   </div>
                 </div>
 
-                <p className="text-gray-700 mb-3">{comment.content}</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-3">
+                  {comment.content}
+                </p>
 
                 {/* Provider Response Details */}
                 {comment.isProviderResponse &&
                   (comment.estimatedCost || comment.estimatedTime) && (
-                    <div className="bg-blue-50 p-3 rounded mb-3">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mb-3">
                       {comment.estimatedCost && (
-                        <div className="text-sm">
+                        <div className="text-sm dark:text-gray-300">
                           <strong>Estimated Cost:</strong> ₹
                           {comment.estimatedCost}
                         </div>
                       )}
                       {comment.estimatedTime && (
-                        <div className="text-sm">
+                        <div className="text-sm dark:text-gray-300">
                           <strong>Estimated Time:</strong>{" "}
                           {comment.estimatedTime}
                         </div>
@@ -474,17 +501,17 @@ export default function IssueDetailPage() {
 
                 {/* Comment Actions */}
                 <div className="flex items-center gap-4 text-sm">
-                  <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600">
+                  <button className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                     <ThumbsUp className="h-3 w-3" />
                     {comment.upvotes || 0}
                   </button>
-                  <button className="flex items-center gap-1 text-gray-600 hover:text-red-600">
+                  <button className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400">
                     <ThumbsDown className="h-3 w-3" />
                     {comment.downvotes || 0}
                   </button>
                   <button
                     onClick={() => setReplyToComment(comment._id!)}
-                    className="text-gray-600 hover:text-blue-600"
+                    className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                   >
                     Reply
                   </button>
@@ -496,19 +523,21 @@ export default function IssueDetailPage() {
                     {comment.replies.map((reply) => (
                       <div
                         key={reply._id}
-                        className="border-l-2 border-gray-100 pl-3"
+                        className="border-l-2 border-gray-100 dark:border-gray-600 pl-3"
                       >
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">
+                          <span className="text-sm font-medium dark:text-white">
                             {typeof reply.author === "object"
                               ? reply.author.name
                               : "User"}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {new Date(reply.createdAt).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700">{reply.content}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {reply.content}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -522,14 +551,14 @@ export default function IssueDetailPage() {
       {/* Crowdfunding Modal */}
       {showCrowdfundingModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold dark:text-white mb-4">
               Contribute to this Issue
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium dark:text-gray-300 mb-1">
                   Amount (₹)
                 </label>
                 <input
@@ -537,12 +566,12 @@ export default function IssueDetailPage() {
                   placeholder="Enter amount"
                   value={contributionAmount}
                   onChange={(e) => setContributionAmount(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium dark:text-gray-300 mb-1">
                   Message (optional)
                 </label>
                 <input
@@ -550,7 +579,7 @@ export default function IssueDetailPage() {
                   placeholder="Add a message with your contribution"
                   value={contributionMessage}
                   onChange={(e) => setContributionMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
 
@@ -561,7 +590,10 @@ export default function IssueDetailPage() {
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
                 />
-                <label htmlFor="anonymous" className="text-sm">
+                <label
+                  htmlFor="anonymous"
+                  className="text-sm dark:text-gray-300"
+                >
                   Contribute anonymously
                 </label>
               </div>
@@ -570,7 +602,7 @@ export default function IssueDetailPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowCrowdfundingModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               >
                 Cancel
               </button>
