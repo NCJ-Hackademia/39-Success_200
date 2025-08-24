@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { ProtectedRoute } from "../../components/ProtectedRoute";
-import api, { dashboardAPI } from "../../lib/api";
+import api, { dashboardAPI, adminAPI } from "../../lib/api";
 import {
   Users,
   FileText,
@@ -36,7 +36,8 @@ interface AdminDashboardStats {
   totalBookings: number;
   completedBookings: number;
   pendingBookings: number;
-  totalRevenue: number;
+  totalServices: number;
+  activeServices: number;
 }
 
 export default function AdminDashboardPage() {
@@ -52,7 +53,8 @@ export default function AdminDashboardPage() {
     totalBookings: 0,
     completedBookings: 0,
     pendingBookings: 0,
-    totalRevenue: 0,
+    totalServices: 0,
+    activeServices: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,15 +64,9 @@ export default function AdminDashboardPage() {
       setLoading(true);
       setError(null);
 
-      // Use the dedicated admin dashboard API function
-      const adminStats = await dashboardAPI.getAdminStats();
-      setStats({
-        ...adminStats,
-        totalBookings: 0, // Will be populated when booking data is available
-        completedBookings: 0,
-        pendingBookings: 0,
-        totalRevenue: 0,
-      });
+      // Use the new admin API for more comprehensive stats
+      const adminStats = await adminAPI.getSystemStats();
+      setStats(adminStats);
     } catch (err: any) {
       console.error("Error fetching admin stats:", err);
       setError(

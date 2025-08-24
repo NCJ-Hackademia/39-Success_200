@@ -85,6 +85,7 @@ export const authAPI = {
     password: string;
     phone: string;
     role: string;
+    adminKey?: string;
   }): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>(
       "/api/auth/register",
@@ -1108,6 +1109,105 @@ export const proposalsAPI = {
   cancelProposal: async (proposalId: string): Promise<ApiResponse<any>> => {
     const response = await api.delete<ApiResponse<any>>(
       `/api/proposals/${proposalId}`
+    );
+    return response.data;
+  },
+};
+
+// Admin API functions
+export const adminAPI = {
+  // Get all users
+  getAllUsers: async (): Promise<ApiResponse<User[]>> => {
+    const response = await api.get<ApiResponse<User[]>>("/api/admin/users");
+    return response.data;
+  },
+
+  // Update user status
+  updateUserStatus: async (
+    userId: string,
+    status: "active" | "inactive" | "suspended"
+  ): Promise<ApiResponse<User>> => {
+    const response = await api.put<ApiResponse<User>>(
+      `/api/admin/users/${userId}/status`,
+      { status }
+    );
+    return response.data;
+  },
+
+  // Delete user
+  deleteUser: async (userId: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(
+      `/api/admin/users/${userId}`
+    );
+    return response.data;
+  },
+
+  // Verify provider
+  verifyProvider: async (
+    providerId: string,
+    verified: boolean
+  ): Promise<ApiResponse<any>> => {
+    const response = await api.put<ApiResponse<any>>(
+      `/api/admin/providers/${providerId}/verify`,
+      { verified }
+    );
+    return response.data;
+  },
+
+  // Get system statistics
+  getSystemStats: async (): Promise<{
+    totalUsers: number;
+    totalConsumers: number;
+    totalProviders: number;
+    verifiedProviders: number;
+    totalIssues: number;
+    openIssues: number;
+    inProgressIssues: number;
+    resolvedIssues: number;
+    totalServices: number;
+    activeServices: number;
+    totalBookings: number;
+    completedBookings: number;
+    pendingBookings: number;
+  }> => {
+    const response = await api.get("/api/admin/stats");
+    return response.data.data;
+  },
+
+  // Get all issues (admin view)
+  getAllIssues: async (): Promise<ApiResponse<Issue[]>> => {
+    const response = await api.get<ApiResponse<Issue[]>>("/api/admin/issues");
+    return response.data;
+  },
+
+  // Delete issue
+  deleteIssue: async (issueId: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(
+      `/api/admin/issues/${issueId}`
+    );
+    return response.data;
+  },
+
+  // Get all services (admin view)
+  getAllServices: async (): Promise<ApiResponse<Service[]>> => {
+    const response = await api.get<ApiResponse<Service[]>>(
+      "/api/admin/services"
+    );
+    return response.data;
+  },
+
+  // Delete service
+  deleteService: async (serviceId: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(
+      `/api/admin/services/${serviceId}`
+    );
+    return response.data;
+  },
+
+  // Get all bookings (admin view)
+  getAllBookings: async (): Promise<ApiResponse<Booking[]>> => {
+    const response = await api.get<ApiResponse<Booking[]>>(
+      "/api/admin/bookings"
     );
     return response.data;
   },

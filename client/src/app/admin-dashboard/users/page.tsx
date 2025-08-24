@@ -4,6 +4,18 @@ import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { useUserStore } from "../../../store/userStore";
+import { adminAPI } from "../../../lib/api";
+import {
+  Users,
+  Search,
+  Filter,
+  MoreVertical,
+  Ban,
+  CheckCircle,
+  Trash2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -16,29 +28,24 @@ const AdminUsers = () => {
 
   const { user } = useUserStore();
 
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await adminAPI.getAllUsers();
+      setUsers(response.data || []);
+    } catch (err: any) {
+      console.error("Error fetching users:", err);
+      setError(err.response?.data?.message || "Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // For now, we'll show placeholder data since we don't have a users API endpoint
-    // In a real app, you would fetch from an API like: api.get('/api/admin/users')
-    setLoading(false);
-    setUsers([
-      {
-        id: "1",
-        name: "John Doe",
-        email: "john@example.com",
-        role: "consumer",
-        createdAt: new Date().toISOString(),
-        isActive: true,
-      },
-      {
-        id: "2",
-        name: "Jane Smith",
-        email: "jane@example.com",
-        role: "provider",
-        createdAt: new Date().toISOString(),
-        isActive: true,
-      },
-    ]);
-  }, [filters]);
+    fetchUsers();
+  }, []);
 
   const getRoleBadge = (role) => {
     const roleColors = {

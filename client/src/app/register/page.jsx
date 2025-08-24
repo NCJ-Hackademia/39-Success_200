@@ -232,13 +232,20 @@ export default function RegisterPage() {
 
     setErrors({});
 
-    const result = await auth.register({
+    const registrationData = {
       name: formData.name.trim(),
       email: formData.email.toLowerCase().trim(),
       phone: formData.phone.trim(),
       password: formData.password,
       role: formData.userType === "admin" ? "admin" : formData.role,
-    });
+    };
+
+    // Add admin key for admin registration
+    if (formData.userType === "admin") {
+      registrationData.adminKey = formData.securityAnswer.toLowerCase().trim();
+    }
+
+    const result = await auth.register(registrationData);
 
     if (result.success) {
       // Redirect to appropriate dashboard

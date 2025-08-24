@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import env from "../config/env.js";
 
 export const register = async (req, res) => {
-  const { name, email, password, phone, role } = req.body;
+  const { name, email, password, phone, role, adminKey } = req.body;
   if (!name || !email || !password || !phone || !role) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -13,6 +13,17 @@ export const register = async (req, res) => {
       .status(400)
       .json({ message: "Role must be admin, consumer, or provider" });
   }
+
+  // Check admin key for admin registration
+  if (role === "admin") {
+    const ADMIN_REGISTRATION_KEY = process.env.ADMIN_KEY || "ADMIN123";
+    if (!adminKey || adminKey !== ADMIN_REGISTRATION_KEY) {
+      return res
+        .status(403)
+        .json({ message: "Invalid admin registration key" });
+    }
+  }
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
