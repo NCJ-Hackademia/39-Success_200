@@ -26,6 +26,7 @@ import {
   XCircle,
   AlertCircle,
   MessageCircle,
+  FileText,
 } from "lucide-react";
 
 interface Booking {
@@ -56,8 +57,26 @@ interface Booking {
     price: number;
   };
   scheduledDate: string;
-  status: "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "negotiating"
+    | "confirmed"
+    | "in_progress"
+    | "completed"
+    | "cancelled"
+    | "rejected";
   totalAmount: number;
+  originalAmount: number;
+  negotiatedAmount?: number;
+  negotiationData?: {
+    isNegotiated: boolean;
+    priceHistory?: Array<{
+      amount: number;
+      proposedBy: string;
+      proposedAt: string;
+      message?: string;
+    }>;
+  };
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   notes?: string;
   createdAt: string;
@@ -75,6 +94,10 @@ export default function ProviderBookingsPage() {
     null
   );
   const [showChat, setShowChat] = useState(false);
+  const [showProposals, setShowProposals] = useState(false);
+  const [selectedBookingForProposals, setSelectedBookingForProposals] =
+    useState<string | null>(null);
+  const [proposals, setProposals] = useState<any[]>([]);
 
   const fetchProviderBookings = async () => {
     try {
@@ -84,7 +107,7 @@ export default function ProviderBookingsPage() {
       // Fetch bookings for the provider
       const response = await api.get("/api/bookings", {
         params: {
-          status: "pending,confirmed,in_progress", // Only pending and active bookings
+          status: "pending,negotiating,confirmed,in_progress", // Include negotiating status
           limit: 50,
         },
       });
@@ -150,10 +173,62 @@ export default function ProviderBookingsPage() {
     setSelectedBookingId(null);
   };
 
+  const viewProposals = async (bookingId: string) => {
+    try {
+      setSelectedBookingForProposals(bookingId);
+
+      // Fetch proposals for this booking
+      const response = await api.get(`/api/proposals/booking/${bookingId}`);
+
+      if (response.data.success) {
+        setProposals(response.data.data || []);
+        setShowProposals(true);
+      } else {
+        alert("Failed to load proposals");
+      }
+    } catch (err: any) {
+      console.error("Error fetching proposals:", err);
+      alert(err.response?.data?.message || "Failed to load proposals");
+    }
+  };
+
+  const closeProposals = () => {
+    setShowProposals(false);
+    setSelectedBookingForProposals(null);
+    setProposals([]);
+  };
+
+  const handleProposalResponse = async (
+    proposalId: string,
+    action: string,
+    responseMessage?: string
+  ) => {
+    try {
+      const response = await api.post(`/api/proposals/${proposalId}/respond`, {
+        action,
+        responseMessage,
+      });
+
+      if (response.data.success) {
+        alert(`Proposal ${action}ed successfully!`);
+        // Refresh proposals and bookings
+        if (selectedBookingForProposals) {
+          await viewProposals(selectedBookingForProposals);
+        }
+        await fetchProviderBookings();
+      }
+    } catch (err: any) {
+      console.error(`Error ${action}ing proposal:`, err);
+      alert(err.response?.data?.message || `Failed to ${action} proposal`);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
         return "text-yellow-600 bg-yellow-100";
+      case "negotiating":
+        return "text-orange-600 bg-orange-100";
       case "confirmed":
         return "text-green-600 bg-green-100";
       case "in_progress":
@@ -161,6 +236,8 @@ export default function ProviderBookingsPage() {
       case "completed":
         return "text-purple-600 bg-purple-100";
       case "cancelled":
+        return "text-red-600 bg-red-100";
+      case "rejected":
         return "text-red-600 bg-red-100";
       default:
         return "text-gray-600 bg-gray-100";
@@ -339,7 +416,25 @@ export default function ProviderBookingsPage() {
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <DollarSign className="h-4 w-4" />
-                        <span>₹{booking.totalAmount.toLocaleString()}</span>
+                        <div className="flex flex-col">
+                          {booking.negotiatedAmount &&
+                          booking.negotiationData?.isNegotiated ? (
+                            <>
+                              <span className="text-green-600 font-medium">
+                                ₹{booking.negotiatedAmount.toLocaleString()}{" "}
+                                (Negotiated)
+                              </span>
+                              <span className="text-gray-400 line-through text-xs">
+                                Original: ₹
+                                {(
+                                  booking.originalAmount || booking.totalAmount
+                                ).toLocaleString()}
+                              </span>
+                            </>
+                          ) : (
+                            <span>₹{booking.totalAmount.toLocaleString()}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -419,6 +514,35 @@ export default function ProviderBookingsPage() {
                         </>
                       )}
 
+                      {booking.status === "negotiating" && (
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 text-orange-600">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="text-sm font-medium">
+                              Under Negotiation
+                            </span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => viewProposals(booking._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <FileText className="h-4 w-4" />
+                            View Proposals
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openChat(booking._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Chat
+                          </Button>
+                        </div>
+                      )}
+
                       {booking.status === "confirmed" && (
                         <div className="flex items-center space-x-2">
                           <div className="flex items-center space-x-2 text-green-600">
@@ -476,6 +600,123 @@ export default function ProviderBookingsPage() {
           currentUserId={user.id}
           onBookingUpdate={fetchProviderBookings}
         />
+      )}
+
+      {/* Proposals Modal */}
+      {showProposals && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Price Proposals</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={closeProposals}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              {proposals.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No proposals found for this booking.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {proposals.map((proposal) => (
+                    <Card key={proposal._id} className="border">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="font-medium text-sm">
+                              {proposal.proposalType === "price"
+                                ? "Price Proposal"
+                                : proposal.proposalType}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              From: {proposal.proposedBy?.name || "Unknown"}
+                            </p>
+                          </div>
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              proposal.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : proposal.status === "accepted"
+                                ? "bg-green-100 text-green-800"
+                                : proposal.status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {proposal.status?.toUpperCase()}
+                          </span>
+                        </div>
+
+                        {proposal.proposedChanges?.price && (
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-green-600">
+                              Proposed Price: ₹
+                              {proposal.proposedChanges.price.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+
+                        {proposal.justification && (
+                          <div className="mb-3">
+                            <p className="text-sm text-gray-700">
+                              {proposal.justification}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="text-xs text-gray-500 mb-3">
+                          Created:{" "}
+                          {new Date(proposal.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(proposal.createdAt).toLocaleTimeString()}
+                        </div>
+
+                        {proposal.status === "pending" && (
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() =>
+                                handleProposalResponse(
+                                  proposal._id,
+                                  "accept",
+                                  "Proposal accepted"
+                                )
+                              }
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleProposalResponse(
+                                  proposal._id,
+                                  "reject",
+                                  "Thank you for your proposal, but I cannot accept this price."
+                                )
+                              }
+                              className="border-red-600 text-red-600 hover:bg-red-50"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </ProtectedRoute>
   );

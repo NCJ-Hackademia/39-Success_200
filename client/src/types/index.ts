@@ -328,6 +328,7 @@ export interface Booking {
 // Booking status workflow
 export enum BookingStatus {
   PENDING = "pending",
+  NEGOTIATING = "negotiating",
   ACCEPTED = "accepted",
   CONFIRMED = "confirmed", // Payment confirmed
   IN_PROGRESS = "in_progress",

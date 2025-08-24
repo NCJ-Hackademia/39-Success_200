@@ -54,6 +54,12 @@ export const getAllBookings = async (req, res) => {
       if (!booking.consumer) console.log(`Booking ${index}: Missing consumer`);
       if (!booking.provider) console.log(`Booking ${index}: Missing provider`);
       if (!booking.service) console.log(`Booking ${index}: Missing service`);
+      // Log negotiation data for debugging
+      if (booking.negotiationData?.isNegotiated) {
+        console.log(
+          `Booking ${index}: Negotiated - Original: ${booking.originalAmount}, Negotiated: ${booking.negotiatedAmount}, Total: ${booking.totalAmount}`
+        );
+      }
     });
 
     const totalPages = Math.ceil(total / limit);
