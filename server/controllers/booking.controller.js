@@ -1,10 +1,10 @@
-<<<<<<< HEAD
 import mongoose from "mongoose";
 import Booking from "../models/Booking.js";
 import User from "../models/userModel.js";
 import Service from "../models/serviceModel.js";
 import Provider from "../models/provider.js";
 import Consumer from "../models/consumer.js";
+import Issue from "../models/Issue.js";
 
 // Create a new booking
 export const createBooking = async (req, res) => {

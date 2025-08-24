@@ -9,14 +9,11 @@ import categoryRoutes from "./routes/category.routes.js";
 import consumerRoutes from "./routes/consumer.routes.js";
 import providerRoutes from "./routes/provider.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
-<<<<<<< HEAD
-=======
 import chatRoutes from "./routes/chat.routes.js";
 import proposalRoutes from "./routes/proposal.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import crowdfundingRoutes from "./routes/crowdfunding.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
->>>>>>> 90e1498fd0578d7d34bb202d42a5dd0a7a2d347e
 import morgan from "morgan";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { requestLogger } from "./utils/logger.js";
@@ -44,14 +41,11 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/consumer", consumerRoutes);
 app.use("/api/provider", providerRoutes);
 app.use("/api/bookings", bookingRoutes);
-<<<<<<< HEAD
-=======
 app.use("/api/chat", chatRoutes);
 app.use("/api/proposals", proposalRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/crowdfunding", crowdfundingRoutes);
 app.use("/api/admin", adminRoutes);
->>>>>>> 90e1498fd0578d7d34bb202d42a5dd0a7a2d347e
 
 // Health check
 app.get("/", (req, res) => {
