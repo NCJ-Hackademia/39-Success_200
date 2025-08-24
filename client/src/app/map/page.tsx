@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -19,6 +19,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Service, Issue, IssueStatus, IssuePriority } from "../../types";
+import { issuesAPI } from "../../lib/api";
+import { useUserStore } from "../../store/userStore";
 import Map from "../../components/map/Map";
 import ServicesMap from "../../components/map/ServicesMap";
 import IssuesMap from "../../components/map/IssuesMap";
@@ -27,6 +29,7 @@ import IssueReportMap from "../../components/map/IssueReportMap";
 const MapDemo: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useUserStore();
   const mode = searchParams.get("mode");
 
   const [activeDemo, setActiveDemo] = useState<
@@ -40,12 +43,58 @@ const MapDemo: React.FC = () => {
   const [manualLocation, setManualLocation] = useState({ lat: "", lng: "" });
   const [showManualInput, setShowManualInput] = useState(false);
 
+  // Real issues state
+  const [realIssues, setRealIssues] = useState<Issue[]>([]);
+  const [issuesLoading, setIssuesLoading] = useState(false);
+  const [issuesError, setIssuesError] = useState<string>("");
+
   // Effect to handle mode changes from URL
   useEffect(() => {
     if (mode === "report") {
       setActiveDemo("report");
     }
   }, [mode]);
+
+  // Fetch real issues from API
+  const fetchRealIssues = useCallback(async () => {
+    if (!user) {
+      setIssuesError("Please log in to view issues");
+      return;
+    }
+
+    setIssuesLoading(true);
+    setIssuesError("");
+
+    try {
+      const response = await issuesAPI.getIssues({
+        page: 1,
+        limit: 100, // Get more issues for the map
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      });
+
+      if (response.success) {
+        setRealIssues(response.data);
+      } else {
+        setIssuesError("Failed to fetch issues");
+      }
+    } catch (error: any) {
+      console.error("Error fetching issues:", error);
+      setIssuesError(error.response?.data?.message || "Failed to fetch issues");
+    } finally {
+      setIssuesLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (activeDemo === "issues" && user) {
+      fetchRealIssues();
+    }
+  }, [activeDemo, user, fetchRealIssues]);
+
+  const handleIssueSelect = (issue: Issue) => {
+    router.push(`/forum/issue/${issue._id || issue.id}`);
+  };
 
   const handleBackToIssues = () => {
     router.push("/consumer-dashboard/issues");
@@ -234,45 +283,6 @@ const MapDemo: React.FC = () => {
         },
         rating: { average: 4.8, count: 35 },
       },
-    },
-  ];
-
-  const sampleIssues: Issue[] = [
-    {
-      _id: "issue1",
-      title: "Pothole on MG Road",
-      description: "Large pothole causing traffic disruption",
-      category: "road_damage",
-      status: IssueStatus.OPEN,
-      priority: IssuePriority.HIGH,
-      location: {
-        coordinates: { latitude: 12.975, longitude: 77.595 },
-        address: "MG Road, Bangalore",
-      },
-      consumer: "user1",
-      images: [],
-      upvotes: 15,
-      upvotedBy: ["user2", "user3"],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      _id: "issue2",
-      title: "Broken Street Light",
-      description: "Street light not working for 3 days",
-      category: "streetlight",
-      status: IssueStatus.IN_PROGRESS,
-      priority: IssuePriority.MEDIUM,
-      location: {
-        coordinates: { latitude: 12.965, longitude: 77.585 },
-        address: "Brigade Road, Bangalore",
-      },
-      consumer: "user4",
-      images: [],
-      upvotes: 8,
-      upvotedBy: ["user5"],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     },
   ];
 
@@ -558,14 +568,46 @@ const MapDemo: React.FC = () => {
                   View and track community-reported issues on an interactive
                   map. Filter by status, category, and priority.
                 </p>
-                <IssuesMap
-                  issues={sampleIssues}
-                  userLocation={userLocation}
-                  height="500px"
-                  onIssueSelect={(issue) => {
-                    alert(`Selected issue: ${issue.title}`);
-                  }}
-                />
+
+                {!user ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">
+                      Please log in to view issues on the map
+                    </p>
+                    <Button
+                      onClick={() => router.push("/login")}
+                      variant="default"
+                      size="default"
+                      className=""
+                    >
+                      Login
+                    </Button>
+                  </div>
+                ) : issuesLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <span className="ml-2">Loading issues...</span>
+                  </div>
+                ) : issuesError ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-600 mb-4">{issuesError}</p>
+                    <Button
+                      onClick={fetchRealIssues}
+                      variant="outline"
+                      size="default"
+                      className=""
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                ) : (
+                  <IssuesMap
+                    issues={realIssues}
+                    userLocation={userLocation}
+                    height="500px"
+                    onIssueSelect={handleIssueSelect}
+                  />
+                )}
               </div>
             )}
 
