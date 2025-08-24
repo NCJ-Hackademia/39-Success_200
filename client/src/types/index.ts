@@ -72,6 +72,27 @@ export interface Issue {
   adminNotes?: string;
   providerNotes?: string;
   isVerified?: boolean; // Admin verification
+  // Forum features
+  commentsCount: number;
+  viewsCount: number;
+  viewedBy: Array<{
+    user: string;
+    viewedAt: string;
+  }>;
+  // Crowdfunding features
+  crowdfunding: {
+    isEnabled: boolean;
+    targetAmount: number;
+    raisedAmount: number;
+    contributors: Array<{
+      user: string;
+      amount: number;
+      contributedAt: string;
+      transactionId: string;
+      isAnonymous: boolean;
+    }>;
+    deadline?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -109,6 +130,80 @@ export enum IssuePriority {
   MEDIUM = "medium",
   HIGH = "high",
   URGENT = "urgent",
+}
+
+// Comment interface for forum discussions
+export interface Comment {
+  id?: string;
+  _id?: string;
+  issue: string; // Issue ID
+  author: User | string; // User object or ID
+  content: string;
+  parentComment?: string; // Parent comment ID for replies
+  replies: Comment[]; // Array of reply comments
+  upvotes: number;
+  upvotedBy: string[]; // Array of user IDs
+  downvotes: number;
+  downvotedBy: string[]; // Array of user IDs
+  isEdited: boolean;
+  editedAt?: string;
+  isDeleted: boolean;
+  deletedAt?: string;
+  isProviderResponse: boolean;
+  estimatedCost?: number;
+  estimatedTime?: string;
+  isMarkedAsSolution: boolean;
+  markedAsSolutionBy?: string;
+  markedAsSolutionAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Crowdfunding transaction interface
+export interface CrowdfundingTransaction {
+  id?: string;
+  _id?: string;
+  issue: string; // Issue ID
+  contributor: User | string; // User object or ID
+  amount: number;
+  transactionId: string;
+  paymentMethod: "card" | "upi" | "wallet" | "bank_transfer";
+  status: "pending" | "completed" | "failed" | "refunded";
+  isAnonymous: boolean;
+  message?: string;
+  refundedAt?: string;
+  refundReason?: string;
+  completedAt?: string;
+  failureReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Crowdfunding details response
+export interface CrowdfundingDetails {
+  crowdfunding: {
+    isEnabled: boolean;
+    targetAmount: number;
+    raisedAmount: number;
+    contributors: Array<{
+      user?: User;
+      amount: number;
+      contributedAt: string;
+      isAnonymous: boolean;
+    }>;
+    deadline?: string;
+  };
+  progressPercentage: number;
+  recentTransactions: Array<{
+    id: string;
+    contributor?: User;
+    amount: number;
+    message?: string;
+    contributedAt: string;
+    isAnonymous: boolean;
+  }>;
+  isCompleted: boolean;
+  daysLeft?: number;
 }
 
 // Provider interface

@@ -21,6 +21,7 @@ import {
   Wrench,
   Shield,
   Bell,
+  MessageCircle,
 } from "lucide-react";
 
 const Navbar = () => {
@@ -56,6 +57,7 @@ const Navbar = () => {
     const baseItems = [
       { href: "/", label: "Home", icon: Home },
       { href: "/issues", label: "Issues", icon: Wrench },
+      { href: "/forum", label: "Community Forum", icon: MessageCircle },
       { href: "/map", label: "Map View", icon: MapPin },
     ];
 

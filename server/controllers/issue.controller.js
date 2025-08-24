@@ -237,3 +237,56 @@ export const upvoteIssue = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+// Track issue view for forum analytics
+export const trackIssueView = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Only track if user is authenticated and hasn't viewed recently
+    if (userId) {
+      const recentView = issue.viewedBy.find(
+        (view) =>
+          view.user.toString() === userId &&
+          Date.now() - view.viewedAt < 24 * 60 * 60 * 1000 // 24 hours
+      );
+
+      if (!recentView) {
+        issue.viewedBy.push({
+          user: userId,
+          viewedAt: new Date(),
+        });
+        issue.viewsCount += 1;
+        await issue.save();
+      }
+    } else {
+      // For anonymous users, just increment view count
+      issue.viewsCount += 1;
+      await issue.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        viewsCount: issue.viewsCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error tracking view:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to track view",
+      error: error.message,
+    });
+  }
+};

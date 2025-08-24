@@ -63,6 +63,67 @@ const issueSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    // Forum features
+    commentsCount: {
+      type: Number,
+      default: 0,
+    },
+    // Crowdfunding features
+    crowdfunding: {
+      isEnabled: {
+        type: Boolean,
+        default: false,
+      },
+      targetAmount: {
+        type: Number,
+        default: 0,
+      },
+      raisedAmount: {
+        type: Number,
+        default: 0,
+      },
+      contributors: [
+        {
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          amount: {
+            type: Number,
+            required: true,
+          },
+          contributedAt: {
+            type: Date,
+            default: Date.now,
+          },
+          transactionId: String,
+          isAnonymous: {
+            type: Boolean,
+            default: false,
+          },
+        },
+      ],
+      deadline: {
+        type: Date,
+      },
+    },
+    // Views tracking for forum popularity
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+    viewedBy: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        viewedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

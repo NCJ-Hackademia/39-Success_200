@@ -72,6 +72,12 @@ const isTokenValid = (token) => {
 const hasRequiredRole = (userRole, requiredRole) => {
   if (!requiredRole || requiredRole === "any") return true;
   if (!userRole) return false;
+
+  // Handle array of roles
+  if (Array.isArray(requiredRole)) {
+    return requiredRole.includes(userRole);
+  }
+
   return userRole === requiredRole;
 };
 

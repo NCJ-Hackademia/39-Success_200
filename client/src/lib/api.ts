@@ -8,6 +8,9 @@ import type {
   Service,
   Booking,
   PaginationParams,
+  Comment,
+  CrowdfundingDetails,
+  CrowdfundingTransaction,
 } from "../types";
 
 // Create axios instance with base configuration
@@ -584,6 +587,263 @@ export const issuesAPI = {
         hasUpvoted: boolean;
       };
     }>(`/api/issues/${id}/upvote`);
+    return response.data;
+  },
+
+  // Track issue view
+  trackView: async (
+    id: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      viewsCount: number;
+    };
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      data: {
+        viewsCount: number;
+      };
+    }>(`/api/issues/${id}/view`);
+    return response.data;
+  },
+};
+
+// Comments API functions
+export const commentsAPI = {
+  // Get comments for an issue
+  getCommentsByIssue: async (
+    issueId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{
+    success: boolean;
+    data: Comment[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> => {
+    const response = await api.get<{
+      success: boolean;
+      data: Comment[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+      };
+    }>(`/api/comments/issue/${issueId}`, { params });
+    return response.data;
+  },
+
+  // Create a comment
+  createComment: async (
+    issueId: string,
+    data: {
+      content: string;
+      parentComment?: string;
+      estimatedCost?: number;
+      estimatedTime?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    data: Comment;
+    message: string;
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      data: Comment;
+      message: string;
+    }>(`/api/comments/issue/${issueId}`, data);
+    return response.data;
+  },
+
+  // Update a comment
+  updateComment: async (
+    commentId: string,
+    data: { content: string }
+  ): Promise<{
+    success: boolean;
+    data: Comment;
+    message: string;
+  }> => {
+    const response = await api.put<{
+      success: boolean;
+      data: Comment;
+      message: string;
+    }>(`/api/comments/${commentId}`, data);
+    return response.data;
+  },
+
+  // Delete a comment
+  deleteComment: async (
+    commentId: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    const response = await api.delete<{
+      success: boolean;
+      message: string;
+    }>(`/api/comments/${commentId}`);
+    return response.data;
+  },
+
+  // Vote on a comment
+  voteComment: async (
+    commentId: string,
+    voteType: "upvote" | "downvote"
+  ): Promise<{
+    success: boolean;
+    data: {
+      upvotes: number;
+      downvotes: number;
+      hasUpvoted: boolean;
+      hasDownvoted: boolean;
+    };
+    message: string;
+  }> => {
+    const response = await api.patch<{
+      success: boolean;
+      data: {
+        upvotes: number;
+        downvotes: number;
+        hasUpvoted: boolean;
+        hasDownvoted: boolean;
+      };
+      message: string;
+    }>(`/api/comments/${commentId}/vote`, { voteType });
+    return response.data;
+  },
+
+  // Mark comment as solution
+  markAsSolution: async (
+    commentId: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    const response = await api.patch<{
+      success: boolean;
+      message: string;
+    }>(`/api/comments/${commentId}/mark-solution`);
+    return response.data;
+  },
+};
+
+// Crowdfunding API functions
+export const crowdfundingAPI = {
+  // Get crowdfunding details for an issue
+  getCrowdfundingDetails: async (
+    issueId: string
+  ): Promise<{
+    success: boolean;
+    data: CrowdfundingDetails;
+  }> => {
+    const response = await api.get<{
+      success: boolean;
+      data: CrowdfundingDetails;
+    }>(`/api/crowdfunding/issue/${issueId}`);
+    return response.data;
+  },
+
+  // Enable crowdfunding for an issue
+  enableCrowdfunding: async (
+    issueId: string,
+    data: {
+      targetAmount: number;
+      deadline?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    data: any;
+    message: string;
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>(`/api/crowdfunding/issue/${issueId}/enable`, data);
+    return response.data;
+  },
+
+  // Contribute to crowdfunding
+  contributeToCrowdfunding: async (
+    issueId: string,
+    data: {
+      amount: number;
+      paymentMethod: string;
+      isAnonymous?: boolean;
+      message?: string;
+      transactionId: string;
+    }
+  ): Promise<{
+    success: boolean;
+    data: any;
+    message: string;
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>(`/api/crowdfunding/issue/${issueId}/contribute`, data);
+    return response.data;
+  },
+
+  // Get user's contribution history
+  getUserContributions: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    success: boolean;
+    data: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> => {
+    const response = await api.get<{
+      success: boolean;
+      data: any[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+      };
+    }>("/api/crowdfunding/my-contributions", { params });
+    return response.data;
+  },
+
+  // Close crowdfunding and assign provider (admin only)
+  closeCrowdfundingAndAssign: async (
+    issueId: string,
+    data: { providerId: string }
+  ): Promise<{
+    success: boolean;
+    data: any;
+    message: string;
+  }> => {
+    const response = await api.post<{
+      success: boolean;
+      data: any;
+      message: string;
+    }>(`/api/crowdfunding/issue/${issueId}/close`, data);
     return response.data;
   },
 };

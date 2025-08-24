@@ -6,8 +6,9 @@ import {
   updateIssue,
   deleteIssue,
   upvoteIssue,
+  trackIssueView,
 } from "../controllers/issue.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, optionalAuthenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -40,5 +41,8 @@ router.patch(
   authenticate(["admin", "provider", "consumer"]),
   upvoteIssue
 );
+
+// Track issue view for analytics
+router.post("/:id/view", optionalAuthenticate, trackIssueView);
 
 export default router;
