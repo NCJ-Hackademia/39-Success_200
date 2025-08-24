@@ -43,17 +43,25 @@ export interface Location {
 
 // Issue/Report interface for citizen reports
 export interface Issue {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
-  category: IssueCategory;
+  category: any; // Can be ObjectId string or populated Category object
   status: IssueStatus;
   priority: IssuePriority;
-  location: Location;
-  reportedBy: string; // User ID
+  location: {
+    address?: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  consumer: string; // User ID who reported
   reportedByUser?: User; // Populated user data
-  assignedTo?: string; // Provider ID
-  assignedProvider?: User; // Populated provider data
+  assignedProvider?: string; // Provider ID
+  assignedTo?: string; // Provider ID (alias)
+  assignedProviderUser?: User; // Populated provider data
   images: string[]; // Array of image URLs
   upvotes: number;
   upvotedBy: string[]; // Array of user IDs
@@ -63,7 +71,28 @@ export interface Issue {
   completionDate?: string;
   adminNotes?: string;
   providerNotes?: string;
-  isVerified: boolean; // Admin verification
+  isVerified?: boolean; // Admin verification
+  // Forum features
+  commentsCount: number;
+  viewsCount: number;
+  viewedBy: Array<{
+    user: string;
+    viewedAt: string;
+  }>;
+  // Crowdfunding features
+  crowdfunding: {
+    isEnabled: boolean;
+    targetAmount: number;
+    raisedAmount: number;
+    contributors: Array<{
+      user: string;
+      amount: number;
+      contributedAt: string;
+      transactionId: string;
+      isAnonymous: boolean;
+    }>;
+    deadline?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -103,39 +132,139 @@ export enum IssuePriority {
   URGENT = "urgent",
 }
 
-// Service interface for provider services
-export interface Service {
-  id: string;
-  title: string;
-  description: string;
-  category: ServiceCategory;
-  providerId: string;
-  provider?: User; // Populated provider data
-  price: {
-    min: number;
-    max: number;
-    unit: string; // "per hour", "fixed", "per visit"
-  };
-  duration: string; // "1-2 hours", "Same day", etc.
-  availability: {
-    days: string[]; // ["monday", "tuesday", ...]
-    hours: {
-      start: string; // "09:00"
-      end: string; // "18:00"
-    };
-  };
-  serviceArea: {
-    cities: string[];
-    radius: number; // in kilometers
-  };
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  isActive: boolean;
-  isVerified: boolean;
-  features: string[]; // ["Emergency service", "24/7 available", ...]
+// Comment interface for forum discussions
+export interface Comment {
+  id?: string;
+  _id?: string;
+  issue: string; // Issue ID
+  author: User | string; // User object or ID
+  content: string;
+  parentComment?: string; // Parent comment ID for replies
+  replies: Comment[]; // Array of reply comments
+  upvotes: number;
+  upvotedBy: string[]; // Array of user IDs
+  downvotes: number;
+  downvotedBy: string[]; // Array of user IDs
+  isEdited: boolean;
+  editedAt?: string;
+  isDeleted: boolean;
+  deletedAt?: string;
+  isProviderResponse: boolean;
+  estimatedCost?: number;
+  estimatedTime?: string;
+  isMarkedAsSolution: boolean;
+  markedAsSolutionBy?: string;
+  markedAsSolutionAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Crowdfunding transaction interface
+export interface CrowdfundingTransaction {
+  id?: string;
+  _id?: string;
+  issue: string; // Issue ID
+  contributor: User | string; // User object or ID
+  amount: number;
+  transactionId: string;
+  paymentMethod: "card" | "upi" | "wallet" | "bank_transfer";
+  status: "pending" | "completed" | "failed" | "refunded";
+  isAnonymous: boolean;
+  message?: string;
+  refundedAt?: string;
+  refundReason?: string;
+  completedAt?: string;
+  failureReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Crowdfunding details response
+export interface CrowdfundingDetails {
+  crowdfunding: {
+    isEnabled: boolean;
+    targetAmount: number;
+    raisedAmount: number;
+    contributors: Array<{
+      user?: User;
+      amount: number;
+      contributedAt: string;
+      isAnonymous: boolean;
+    }>;
+    deadline?: string;
+  };
+  progressPercentage: number;
+  recentTransactions: Array<{
+    id: string;
+    contributor?: User;
+    amount: number;
+    message?: string;
+    contributedAt: string;
+    isAnonymous: boolean;
+  }>;
+  isCompleted: boolean;
+  daysLeft?: number;
+}
+
+// Provider interface
+export interface Provider extends User {
+  businessInfo?: {
+    businessName: string;
+    description: string;
+    category: string;
+  };
+  contactInfo?: {
+    phoneNumber: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      postalCode: string;
+      country: string;
+      coordinates: {
+        latitude: number;
+        longitude: number;
+      };
+    };
+  };
+  serviceArea?: {
+    radius: number;
+    center: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  rating?: {
+    average: number;
+    count: number;
+  };
+  pricing?: {
+    basePrice: number;
+    hourlyRate: number;
+    currency: string;
+  };
+  isVerified?: boolean;
+  isOnline?: boolean;
+  services?: string[];
+}
+
+// Service interface for provider services
+export interface Service {
+  id?: string;
+  _id?: string;
+  name: string;
+  description: string;
+  category: string;
+  provider: string | User | Provider; // Can be ObjectId string or populated User/Provider object
+  price: number;
+  available?: boolean;
+  pricing?: {
+    basePrice: number;
+    hourlyRate: number;
+    currency: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Service categories
@@ -343,6 +472,7 @@ export interface ApiResponse<T> {
 }
 
 export interface LoginResponse {
+  message: string;
   user: User;
   token: string;
   refreshToken?: string;

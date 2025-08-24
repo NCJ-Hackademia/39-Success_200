@@ -9,15 +9,61 @@ export const getAllIssues = async (req, res) => {
       filter.consumer = req.user.id;
     }
 
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sorting
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+    const sort = { [sortBy]: sortOrder };
+
+    // Status filter
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    // Category filter
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
+    // Crowdfunding filter
+    if (req.query.crowdfunding) {
+      if (req.query.crowdfunding === "enabled") {
+        filter["crowdfunding.isEnabled"] = true;
+      } else if (req.query.crowdfunding === "disabled") {
+        filter["crowdfunding.isEnabled"] = { $ne: true };
+      }
+    }
+
+    // Get total count for pagination
+    const total = await Issue.countDocuments(filter);
+
     const issues = await Issue.find(filter)
       .populate("consumer", "name email")
       .populate("assignedProvider", "name email")
       .populate("category", "name description icon")
-      .sort({ createdAt: -1 });
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
 
     res.status(200).json({
       success: true,
       data: issues,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -160,5 +206,195 @@ export const deleteIssue = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const upvoteIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
+
+    const userId = req.user.id;
+    const hasUpvoted = issue.upvotedBy.includes(userId);
+
+    if (hasUpvoted) {
+      // Remove upvote
+      issue.upvotedBy = issue.upvotedBy.filter(
+        (id) => id.toString() !== userId
+      );
+      issue.upvotes = Math.max(0, issue.upvotes - 1);
+    } else {
+      // Add upvote
+      issue.upvotedBy.push(userId);
+      issue.upvotes += 1;
+    }
+
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: hasUpvoted ? "Upvote removed" : "Issue upvoted",
+      data: {
+        upvotes: issue.upvotes,
+        hasUpvoted: !hasUpvoted,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Track issue view for forum analytics
+export const trackIssueView = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Only track if user is authenticated and hasn't viewed recently
+    if (userId) {
+      const recentView = issue.viewedBy.find(
+        (view) =>
+          view.user.toString() === userId &&
+          Date.now() - view.viewedAt < 24 * 60 * 60 * 1000 // 24 hours
+      );
+
+      if (!recentView) {
+        issue.viewedBy.push({
+          user: userId,
+          viewedAt: new Date(),
+        });
+        issue.viewsCount += 1;
+        await issue.save();
+      }
+    } else {
+      // For anonymous users, just increment view count
+      issue.viewsCount += 1;
+      await issue.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        viewsCount: issue.viewsCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error tracking view:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to track view",
+      error: error.message,
+    });
+  }
+};
+
+// Enable crowdfunding for an issue
+export const enableCrowdfunding = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { targetAmount, deadline } = req.body;
+    const userId = req.user.id;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Check if user owns the issue or is admin
+    if (issue.consumer.toString() !== userId && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You can only enable crowdfunding for your own issues",
+      });
+    }
+
+    // Validate input
+    if (!targetAmount || targetAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Target amount must be greater than 0",
+      });
+    }
+
+    // Update crowdfunding settings
+    issue.crowdfunding.isEnabled = true;
+    issue.crowdfunding.targetAmount = targetAmount;
+
+    if (deadline) {
+      issue.crowdfunding.deadline = new Date(deadline);
+    }
+
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Crowdfunding enabled successfully",
+      data: issue,
+    });
+  } catch (error) {
+    console.error("Error enabling crowdfunding:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to enable crowdfunding",
+      error: error.message,
+    });
+  }
+};
+
+// Disable crowdfunding for an issue
+export const disableCrowdfunding = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Check if user owns the issue or is admin
+    if (issue.consumer.toString() !== userId && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You can only disable crowdfunding for your own issues",
+      });
+    }
+
+    // Disable crowdfunding
+    issue.crowdfunding.isEnabled = false;
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Crowdfunding disabled successfully",
+      data: issue,
+    });
+  } catch (error) {
+    console.error("Error disabling crowdfunding:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to disable crowdfunding",
+      error: error.message,
+    });
   }
 };

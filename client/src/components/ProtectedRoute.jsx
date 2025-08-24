@@ -72,6 +72,12 @@ const isTokenValid = (token) => {
 const hasRequiredRole = (userRole, requiredRole) => {
   if (!requiredRole || requiredRole === "any") return true;
   if (!userRole) return false;
+
+  // Handle array of roles
+  if (Array.isArray(requiredRole)) {
+    return requiredRole.includes(userRole);
+  }
+
   return userRole === requiredRole;
 };
 
@@ -81,9 +87,9 @@ const getRedirectPath = (user) => {
 
   switch (user.role) {
     case "admin":
-      return "/admin";
+      return "/admin-dashboard";
     case "consumer":
-      return "/dashboard";
+      return "/consumer-dashboard";
     case "provider":
       return "/provider-dashboard";
     default:

@@ -6,7 +6,22 @@ export const getAllServices = async (req, res) => {
     let filter = {};
 
     if (category) filter.category = category;
-    if (provider) filter.provider = provider;
+    if (provider) {
+      // Handle special case where provider is "current"
+      if (provider === "current") {
+        // This requires authentication, check if user is authenticated
+        if (!req.user || !req.user.id) {
+          return res
+            .status(401)
+            .json({
+              message: "Authentication required for current provider services",
+            });
+        }
+        filter.provider = req.user.id;
+      } else {
+        filter.provider = provider;
+      }
+    }
     if (available !== undefined) filter.available = available === "true";
 
     const services = await Service.find(filter)

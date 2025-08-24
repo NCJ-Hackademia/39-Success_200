@@ -117,7 +117,18 @@ export const useUserStore = create<UserState>()(
 // Utility hooks for common use cases
 export const useAuth = () => {
   const { user, token, isAuthenticated, isLoading } = useUserStore();
-  return { user, token, isAuthenticated, isLoading };
+  const userRole = user?.role || null;
+
+  return {
+    user,
+    token,
+    isAuthenticated,
+    isLoading,
+    userRole,
+    // Convenience methods
+    isLoggedIn: isAuthenticated,
+    hasRole: (role: string) => userRole === role,
+  };
 };
 
 export const useUserActions = () => {
@@ -160,9 +171,9 @@ export const clearAllAuthData = () => {
 export const getRedirectPath = (role: string) => {
   switch (role) {
     case "admin":
-      return "/admin";
+      return "/admin-dashboard";
     case "consumer":
-      return "/dashboard";
+      return "/consumer-dashboard";
     case "provider":
       return "/provider-dashboard";
     default:

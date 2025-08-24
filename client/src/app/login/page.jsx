@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { useUserActions } from "../../store/userStore";
+import { authAPI } from "../../lib/api";
+import useAuth from "../../hooks/useAuth";
 import {
   Eye,
   EyeOff,
@@ -26,7 +28,7 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth } = useUserActions();
+  const auth = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -34,7 +36,6 @@ export default function LoginPage() {
   });
 
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // Validation function
@@ -76,32 +77,18 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
     setErrors({});
 
-    try {
-      // Mock API call - replace with actual API
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+    const result = await auth.login({
+      email: formData.email.toLowerCase().trim(),
+      password: formData.password,
+    });
 
-      // Mock successful login - replace with actual API response
-      const mockUser = {
-        id: 1,
-        name: "John Doe",
-        email: formData.email,
-        role: formData.email.includes("admin") ? "admin" : "consumer",
-      };
-
-      const mockToken = "mock-jwt-token-" + Date.now();
-
-      // Set authentication state
-      setAuth(mockUser, mockToken);
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (error) {
-      setErrors({ general: "Invalid email or password. Please try again." });
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      // Redirect to appropriate dashboard
+      router.push(result.redirectPath);
+    } else {
+      setErrors({ general: result.error });
     }
   };
 
@@ -190,7 +177,7 @@ export default function LoginPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                       autoComplete="email"
                     />
                   </div>
@@ -225,14 +212,14 @@ export default function LoginPage() {
                           ? "border-red-500 focus:border-red-500"
                           : ""
                       }`}
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                       autoComplete="current-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                      disabled={isLoading}
+                      disabled={auth.isLoading}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -279,9 +266,9 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
-                  disabled={isLoading}
+                  disabled={auth.isLoading}
                 >
-                  {isLoading ? (
+                  {auth.isLoading ? (
                     <div className="flex items-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Signing In...</span>
@@ -312,7 +299,7 @@ export default function LoginPage() {
                       handleInputChange("password", "admin123");
                     }}
                     className="flex items-center justify-center px-4 py-3 border border-purple-300 dark:border-purple-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-                    disabled={isLoading}
+                    disabled={auth.isLoading}
                   >
                     <Shield className="w-4 h-4 mr-2" />
                     Admin Demo
@@ -324,7 +311,7 @@ export default function LoginPage() {
                       handleInputChange("password", "user123");
                     }}
                     className="flex items-center justify-center px-4 py-3 border border-blue-300 dark:border-blue-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                    disabled={isLoading}
+                    disabled={auth.isLoading}
                   >
                     <User className="w-4 h-4 mr-2" />
                     User Demo

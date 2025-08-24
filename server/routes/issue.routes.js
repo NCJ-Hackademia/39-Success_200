@@ -5,8 +5,12 @@ import {
   createIssue,
   updateIssue,
   deleteIssue,
+  upvoteIssue,
+  trackIssueView,
+  enableCrowdfunding,
+  disableCrowdfunding,
 } from "../controllers/issue.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, optionalAuthenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -32,5 +36,29 @@ router.put(
 
 // Delete issue (consumer can delete their own, admin can delete any)
 router.delete("/:id", authenticate(["admin", "consumer"]), deleteIssue);
+
+// Upvote/downvote issue (all authenticated users)
+router.patch(
+  "/:id/upvote",
+  authenticate(["admin", "provider", "consumer"]),
+  upvoteIssue
+);
+
+// Track issue view for analytics
+router.post("/:id/view", optionalAuthenticate, trackIssueView);
+
+// Enable crowdfunding for an issue (consumer/admin only)
+router.post(
+  "/:id/crowdfunding/enable",
+  authenticate(["admin", "consumer"]),
+  enableCrowdfunding
+);
+
+// Disable crowdfunding for an issue (consumer/admin only)
+router.post(
+  "/:id/crowdfunding/disable",
+  authenticate(["admin", "consumer"]),
+  disableCrowdfunding
+);
 
 export default router;

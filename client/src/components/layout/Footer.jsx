@@ -50,15 +50,15 @@ const Footer = () => {
 
     if (isAdmin()) {
       return [
-        { label: "Admin Dashboard", href: "/admin" },
-        { label: "User Management", href: "/admin/users" },
-        { label: "System Reports", href: "/admin/reports" },
+        { label: "Admin Dashboard", href: "/admin-dashboard" },
+        { label: "User Management", href: "/admin-dashboard/users" },
+        { label: "System Reports", href: "/admin-dashboard/reports" },
       ];
     } else if (isConsumer()) {
       return [
-        { label: "My Dashboard", href: "/dashboard" },
-        { label: "Report New Issue", href: "/dashboard/report-issue" },
-        { label: "Track Issues", href: "/dashboard/issues" },
+        { label: "My Dashboard", href: "/consumer-dashboard" },
+        { label: "Report New Issue", href: "/issues" },
+        { label: "Track Issues", href: "/consumer-dashboard/issues" },
       ];
     } else if (isProvider()) {
       return [

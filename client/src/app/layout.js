@@ -1,5 +1,7 @@
 import "./globals.css";
 import { ThemeProvider } from "../contexts/ThemeContext";
+import { ToastProvider } from "../contexts/ToastContext";
+import { ToastContainer } from "../components/ui/toast";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 
@@ -54,11 +56,14 @@ export default function RootLayout({ children }) {
       </head>
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
         <ThemeProvider>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
+          <ToastProvider>
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <ToastContainer />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

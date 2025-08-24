@@ -360,6 +360,26 @@ export const getProviderStatistics = async (req, res) => {
   }
 };
 
+// Get provider bookings
+export const getProviderBookings = async (req, res) => {
+  try {
+    const Booking = (await import("../models/Booking.js")).default;
+
+    const bookings = await Booking.find({ provider: req.user.id })
+      .populate("consumer", "name email")
+      .populate("service", "name description price")
+      .populate("issue", "title description")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: bookings,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 // Verify provider (admin only)
 export const verifyProvider = async (req, res) => {
   try {
