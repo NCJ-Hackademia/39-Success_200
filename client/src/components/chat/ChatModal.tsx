@@ -7,6 +7,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../../contexts/ToastContext";
+import { useSocket } from "../../contexts/SocketContext";
 import { chatAPI } from "../../lib/api";
 import Image from "next/image";
 import {
@@ -21,6 +22,9 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  Users,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
 interface Message {
@@ -86,9 +90,14 @@ export default function ChatModal({
     reason: "",
   });
   const [uploading, setUploading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { addToast } = useToast();
+  const { socket, isConnected, onlineUsers, typingUsers } = useSocket();
 
   const initializeChat = useCallback(async () => {
     try {
@@ -125,6 +134,114 @@ export default function ChatModal({
     scrollToBottom();
   }, [messages]);
 
+  // Real-time socket event handlers
+  useEffect(() => {
+    if (!socket || !chatRoom) return;
+
+    // Join chat room for real-time updates
+    socket.emit("join_chat_room", chatRoom._id);
+
+    // Handle new messages
+    socket.on("new_message", ({ message, chatRoomId }) => {
+      if (chatRoomId === chatRoom._id) {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
+
+    // Handle new price offers
+    socket.on("new_price_offer", ({ message, offer, chatRoomId }) => {
+      if (chatRoomId === chatRoom._id) {
+        setMessages((prev) => [...prev, message]);
+        addToast({
+          type: "info",
+          message: `New price offer: $${offer.amount}`,
+          duration: 5000,
+        });
+      }
+    });
+
+    // Handle price offer responses
+    socket.on("price_offer_response", ({ message, action, chatRoomId }) => {
+      if (chatRoomId === chatRoom._id) {
+        setMessages((prev) => [...prev, message]);
+        addToast({
+          type: action === "accept" ? "success" : "warning",
+          message: `Price offer ${action}ed`,
+          duration: 3000,
+        });
+        if (action === "accept" && onBookingUpdate) {
+          onBookingUpdate();
+        }
+      }
+    });
+
+    // Handle typing indicators
+    socket.on("user_typing", ({ userId, userName, chatRoomId }) => {
+      if (chatRoomId === chatRoom._id && userId !== currentUserId) {
+        // Typing indicator logic is handled by the typingUsers from context
+      }
+    });
+
+    // Handle user joining/leaving chat
+    socket.on("user_joined_chat", ({ userId, chatRoomId }) => {
+      if (chatRoomId === chatRoom._id && userId !== currentUserId) {
+        addToast({
+          type: "info",
+          message: "User joined the chat",
+          duration: 2000,
+        });
+      }
+    });
+
+    socket.on("user_left_chat", ({ userId, chatRoomId }) => {
+      if (chatRoomId === chatRoom._id && userId !== currentUserId) {
+        addToast({
+          type: "info",
+          message: "User left the chat",
+          duration: 2000,
+        });
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      socket.emit("leave_chat_room", chatRoom._id);
+      socket.off("new_message");
+      socket.off("new_price_offer");
+      socket.off("price_offer_response");
+      socket.off("user_typing");
+      socket.off("user_stopped_typing");
+      socket.off("user_joined_chat");
+      socket.off("user_left_chat");
+    };
+  }, [socket, chatRoom, currentUserId, addToast, onBookingUpdate]);
+
+  // Handle typing indicators
+  const handleTyping = () => {
+    if (!socket || !chatRoom) return;
+
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.emit("typing_start", {
+        chatRoomId: chatRoom._id,
+        userName: "You", // This should be the current user's name
+      });
+    }
+
+    // Clear existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Set new timeout to stop typing
+    const timeout = setTimeout(() => {
+      setIsTyping(false);
+      socket.emit("typing_stop", { chatRoomId: chatRoom._id });
+    }, 2000);
+
+    setTypingTimeout(timeout);
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -134,12 +251,19 @@ export default function ChatModal({
 
     try {
       setSending(true);
+
+      // Stop typing indicator
+      if (isTyping && socket) {
+        setIsTyping(false);
+        socket.emit("typing_stop", { chatRoomId: chatRoom._id });
+      }
+
       const response = await chatAPI.sendMessage(chatRoom._id, {
         messageType: "text",
         content: { text: newMessage.trim() },
       });
 
-      setMessages((prev) => [...prev, response.data]);
+      // Note: Real-time message will be received via socket, so we don't add it here
       setNewMessage("");
     } catch (error: any) {
       console.error("Error sending message:", error);
@@ -504,7 +628,35 @@ export default function ChatModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Chat & Negotiation</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Chat & Negotiation</DialogTitle>
+            <div className="flex items-center space-x-2">
+              {/* Connection Status */}
+              <div className="flex items-center space-x-1">
+                {isConnected ? (
+                  <Wifi className="h-4 w-4 text-green-500" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-red-500" />
+                )}
+                <span className="text-xs text-gray-500">
+                  {isConnected ? "Connected" : "Offline"}
+                </span>
+              </div>
+
+              {/* Online Users Indicator */}
+              {chatRoom && (
+                <div className="flex items-center space-x-1">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  <span className="text-xs text-gray-500">
+                    {chatRoom.participants?.filter((p: any) =>
+                      onlineUsers.has(p._id || p)
+                    ).length || 0}{" "}
+                    online
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </DialogHeader>
 
         {/* Messages Area */}
@@ -512,6 +664,17 @@ export default function ChatModal({
           {messages.map((message) => (
             <div key={message._id}>{renderMessage(message)}</div>
           ))}
+
+          {/* Typing Indicators */}
+          {chatRoom &&
+            Array.from(typingUsers.entries())
+              .filter(([key, _]) => key.startsWith(chatRoom._id))
+              .map(([key, user]) => (
+                <div key={key} className="text-gray-500 text-sm italic">
+                  {user.userName} is typing...
+                </div>
+              ))}
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -558,7 +721,10 @@ export default function ChatModal({
               type="text"
               className="flex-1"
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                handleTyping();
+              }}
               placeholder="Type your message..."
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               disabled={sending}

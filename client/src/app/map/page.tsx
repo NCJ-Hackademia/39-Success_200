@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -26,7 +26,7 @@ import ServicesMap from "../../components/map/ServicesMap";
 import IssuesMap from "../../components/map/IssuesMap";
 import IssueReportMap from "../../components/map/IssueReportMap";
 
-const MapDemo: React.FC = () => {
+const MapDemoContent: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUserStore();
@@ -690,6 +690,25 @@ const MapDemo: React.FC = () => {
         )}
       </div>
     </div>
+  );
+};
+
+// Loading fallback component
+const MapDemoLoading = () => (
+  <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+    <div className="text-center">
+      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+      <p className="text-gray-600">Loading map...</p>
+    </div>
+  </div>
+);
+
+// Main component with Suspense boundary
+const MapDemo: React.FC = () => {
+  return (
+    <Suspense fallback={<MapDemoLoading />}>
+      <MapDemoContent />
+    </Suspense>
   );
 };
 
