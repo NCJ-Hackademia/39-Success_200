@@ -29,6 +29,15 @@ export const getAllIssues = async (req, res) => {
       filter.category = req.query.category;
     }
 
+    // Crowdfunding filter
+    if (req.query.crowdfunding) {
+      if (req.query.crowdfunding === "enabled") {
+        filter["crowdfunding.isEnabled"] = true;
+      } else if (req.query.crowdfunding === "disabled") {
+        filter["crowdfunding.isEnabled"] = { $ne: true };
+      }
+    }
+
     // Get total count for pagination
     const total = await Issue.countDocuments(filter);
 
@@ -286,6 +295,105 @@ export const trackIssueView = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to track view",
+      error: error.message,
+    });
+  }
+};
+
+// Enable crowdfunding for an issue
+export const enableCrowdfunding = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { targetAmount, deadline } = req.body;
+    const userId = req.user.id;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Check if user owns the issue or is admin
+    if (issue.consumer.toString() !== userId && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You can only enable crowdfunding for your own issues",
+      });
+    }
+
+    // Validate input
+    if (!targetAmount || targetAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Target amount must be greater than 0",
+      });
+    }
+
+    // Update crowdfunding settings
+    issue.crowdfunding.isEnabled = true;
+    issue.crowdfunding.targetAmount = targetAmount;
+
+    if (deadline) {
+      issue.crowdfunding.deadline = new Date(deadline);
+    }
+
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Crowdfunding enabled successfully",
+      data: issue,
+    });
+  } catch (error) {
+    console.error("Error enabling crowdfunding:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to enable crowdfunding",
+      error: error.message,
+    });
+  }
+};
+
+// Disable crowdfunding for an issue
+export const disableCrowdfunding = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: "Issue not found",
+      });
+    }
+
+    // Check if user owns the issue or is admin
+    if (issue.consumer.toString() !== userId && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You can only disable crowdfunding for your own issues",
+      });
+    }
+
+    // Disable crowdfunding
+    issue.crowdfunding.isEnabled = false;
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Crowdfunding disabled successfully",
+      data: issue,
+    });
+  } catch (error) {
+    console.error("Error disabling crowdfunding:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to disable crowdfunding",
       error: error.message,
     });
   }

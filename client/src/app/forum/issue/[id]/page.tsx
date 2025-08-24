@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { issuesAPI, commentsAPI, crowdfundingAPI } from "../../../../lib/api";
 import type { Issue, Comment, CrowdfundingDetails } from "../../../../types";
 import { useUserStore } from "../../../../store/userStore";
+import CrowdfundingModal from "../../../../components/issues/CrowdfundingModal";
 import {
   ArrowLeft,
   Heart,
@@ -17,6 +18,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   CheckCircle,
+  Settings,
 } from "lucide-react";
 
 export default function IssueDetailPage() {
@@ -30,6 +32,8 @@ export default function IssueDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [replyToComment, setReplyToComment] = useState<string | null>(null);
   const [showCrowdfundingModal, setShowCrowdfundingModal] = useState(false);
+  const [showCrowdfundingManageModal, setShowCrowdfundingManageModal] =
+    useState(false);
   const [contributionAmount, setContributionAmount] = useState("");
   const [contributionMessage, setContributionMessage] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -39,7 +43,7 @@ export default function IssueDetailPage() {
   const params = useParams();
   const issueId = params.id as string;
 
-  const fetchIssueData = async () => {
+  const fetchIssueData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -67,13 +71,13 @@ export default function IssueDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [issueId]);
 
   useEffect(() => {
     if (issueId) {
       fetchIssueData();
     }
-  }, [issueId]);
+  }, [issueId, fetchIssueData]);
 
   const handleUpvoteIssue = async () => {
     if (!issue) {
@@ -198,6 +202,8 @@ export default function IssueDetailPage() {
   }
 
   const hasUserUpvoted = issue.upvotedBy.includes(user?.id || "");
+  const isIssueOwner = user?.id === issue.consumer;
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "open":
@@ -320,6 +326,16 @@ export default function IssueDetailPage() {
               >
                 <DollarSign className="h-4 w-4" />
                 Contribute
+              </button>
+            )}
+
+            {isIssueOwner && (
+              <button
+                onClick={() => setShowCrowdfundingManageModal(true)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
+              >
+                <Settings className="h-4 w-4" />
+                {issue.crowdfunding?.isEnabled ? "Manage Fund" : "Enable Fund"}
               </button>
             )}
           </div>
@@ -616,6 +632,21 @@ export default function IssueDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Crowdfunding Management Modal */}
+      <CrowdfundingModal
+        isOpen={showCrowdfundingManageModal}
+        onClose={() => setShowCrowdfundingManageModal(false)}
+        issue={issue}
+        onSuccess={(updatedIssue) => {
+          setIssue(updatedIssue);
+          setShowCrowdfundingManageModal(false);
+          // Refresh crowdfunding data if needed
+          if (updatedIssue.crowdfunding?.isEnabled) {
+            fetchIssueData();
+          }
+        }}
+      />
     </div>
   );
 }

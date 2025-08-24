@@ -492,6 +492,7 @@ export const issuesAPI = {
     limit?: number;
     status?: string;
     category?: string;
+    crowdfunding?: string;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
   }): Promise<{
@@ -605,6 +606,29 @@ export const issuesAPI = {
         viewsCount: number;
       };
     }>(`/api/issues/${id}/view`);
+    return response.data;
+  },
+
+  // Enable crowdfunding for an issue - UPDATED
+  enableCrowdfunding: async (
+    id: string,
+    data: {
+      targetAmount: number;
+      deadline?: string;
+    }
+  ): Promise<ApiResponse<Issue>> => {
+    const response = await api.post<ApiResponse<Issue>>(
+      `/api/issues/${id}/crowdfunding/enable`,
+      data
+    );
+    return response.data;
+  },
+
+  // Disable crowdfunding for an issue - UPDATED
+  disableCrowdfunding: async (id: string): Promise<ApiResponse<Issue>> => {
+    const response = await api.post<ApiResponse<Issue>>(
+      `/api/issues/${id}/crowdfunding/disable`
+    );
     return response.data;
   },
 };

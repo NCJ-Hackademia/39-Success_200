@@ -7,14 +7,20 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { useUserStore } from "../../store/userStore";
 import useInfiniteScroll from "../../hooks/useInfiniteScroll";
+import CrowdfundingModal from "./CrowdfundingModal";
 
-const IssueCard = ({ issue, onUpvote, user }) => {
+const IssueCard = ({ issue, onUpvote, onIssueUpdate, user }) => {
   const router = useRouter();
   const [isUpvoting, setIsUpvoting] = useState(false);
   const [upvotes, setUpvotes] = useState(issue.upvotes || 0);
   const [hasUpvoted, setHasUpvoted] = useState(
     issue.upvotedBy?.includes(user?.id) || false
   );
+  const [showCrowdfundingModal, setShowCrowdfundingModal] = useState(false);
+
+  // Check if current user owns this issue
+  const isOwner =
+    user?.id === (issue.consumer?.id || issue.consumer?._id || issue.consumer);
 
   const handleUpvote = async (e) => {
     e.stopPropagation(); // Prevent card click when upvoting
@@ -104,127 +110,224 @@ const IssueCard = ({ issue, onUpvote, user }) => {
   };
 
   return (
-    <Card
-      className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={handleCardClick}
-    >
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">
-            {issue.title}
-          </h3>
-          <p className="text-gray-600 mb-3 line-clamp-3">{issue.description}</p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col items-center ml-4 gap-2">
-          <Button
-            onClick={handleUpvote}
-            disabled={isUpvoting || !user}
-            variant={hasUpvoted ? "default" : "outline"}
-            size="sm"
-            className="min-w-[70px]"
-          >
-            {isUpvoting ? "..." : hasUpvoted ? "👍" : "👍"} {upvotes}
-          </Button>
-
-          <Button
-            onClick={handleViewDetails}
-            variant="outline"
-            size="sm"
-            className="min-w-[70px] text-xs"
-          >
-            View Details
-          </Button>
-        </div>
-      </div>
-
-      {/* Issue Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <p className="text-sm text-gray-500">Status</p>
-          {getStatusBadge(issue.status)}
-        </div>
-        <div>
-          <p className="text-sm text-gray-500">Priority</p>
-          {getPriorityBadge(issue.priority)}
-        </div>
-        <div>
-          <p className="text-sm text-gray-500">Category</p>
-          <p className="font-medium">
-            {issue.category?.name || issue.category || "Unknown"}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-500">Reported by</p>
-          <p className="font-medium">
-            {issue.consumer?.name || issue.reportedByUser?.name || "Anonymous"}
-          </p>
-        </div>
-      </div>
-
-      {/* Location */}
-      {issue.location && (
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">Location</p>
-          <p className="font-medium">{issue.location.address}</p>
-          {issue.location.coordinates && (
-            <p className="text-xs text-gray-400">
-              📍 {issue.location.coordinates.latitude?.toFixed(6)},{" "}
-              {issue.location.coordinates.longitude?.toFixed(6)}
+    <>
+      <Card
+        className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+        onClick={handleCardClick}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">
+              {issue.title}
+            </h3>
+            <p className="text-gray-600 mb-3 line-clamp-3">
+              {issue.description}
             </p>
-          )}
-        </div>
-      )}
+          </div>
 
-      {/* Images */}
-      {issue.images && issue.images.length > 0 && (
-        <div className="mb-4">
-          <p className="text-sm text-gray-500 mb-2">Images</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {issue.images.slice(0, 4).map((imageUrl, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={imageUrl}
-                  alt={`Issue image ${index + 1}`}
-                  className="w-full h-20 object-cover rounded-md border"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
-              </div>
-            ))}
-            {issue.images.length > 4 && (
-              <div className="flex items-center justify-center h-20 bg-gray-100 rounded-md border">
-                <span className="text-sm text-gray-500">
-                  +{issue.images.length - 4} more
-                </span>
-              </div>
+          {/* Action Buttons */}
+          <div className="flex flex-col items-center ml-4 gap-2">
+            <Button
+              onClick={handleUpvote}
+              disabled={isUpvoting || !user}
+              variant={hasUpvoted ? "default" : "outline"}
+              size="sm"
+              className="min-w-[70px]"
+            >
+              {isUpvoting ? "..." : hasUpvoted ? "👍" : "👍"} {upvotes}
+            </Button>
+
+            <Button
+              onClick={handleViewDetails}
+              variant="outline"
+              size="sm"
+              className="min-w-[70px] text-xs"
+            >
+              View Details
+            </Button>
+
+            {isOwner && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCrowdfundingModal(true);
+                }}
+                variant={issue.crowdfunding?.isEnabled ? "default" : "outline"}
+                size="sm"
+                className="min-w-[70px] text-xs"
+              >
+                💰 {issue.crowdfunding?.isEnabled ? "Manage" : "Fund"}
+              </Button>
             )}
           </div>
         </div>
-      )}
 
-      {/* Estimated Cost */}
-      {issue.estimatedCost && (
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">Estimated Cost</p>
-          <p className="font-medium">₹{issue.estimatedCost.toLocaleString()}</p>
+        {/* Issue Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-sm text-gray-500">Status</p>
+            {getStatusBadge(issue.status)}
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Priority</p>
+            {getPriorityBadge(issue.priority)}
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Category</p>
+            <p className="font-medium">
+              {issue.category?.name || issue.category || "Unknown"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Reported by</p>
+            <p className="font-medium">
+              {issue.consumer?.name ||
+                issue.reportedByUser?.name ||
+                "Anonymous"}
+            </p>
+          </div>
         </div>
-      )}
 
-      {/* Footer */}
-      <div className="flex justify-between items-center text-sm text-gray-500 pt-4 border-t">
-        <div className="flex items-center gap-4">
-          <span>📅 {formatDate(issue.createdAt)}</span>
-          <span>👀 {issue.viewsCount || 0} views</span>
-          <span>💬 {issue.commentsCount || 0} comments</span>
-        </div>
-        {issue.updatedAt !== issue.createdAt && (
-          <span>Updated {formatDate(issue.updatedAt)}</span>
+        {/* Location */}
+        {issue.location && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-500">Location</p>
+            <p className="font-medium">{issue.location.address}</p>
+            {issue.location.coordinates && (
+              <p className="text-xs text-gray-400">
+                📍 {issue.location.coordinates.latitude?.toFixed(6)},{" "}
+                {issue.location.coordinates.longitude?.toFixed(6)}
+              </p>
+            )}
+          </div>
         )}
-      </div>
-    </Card>
+
+        {/* Images */}
+        {issue.images && issue.images.length > 0 && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-500 mb-2">Images</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {issue.images.slice(0, 4).map((imageUrl, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={imageUrl}
+                    alt={`Issue image ${index + 1}`}
+                    className="w-full h-20 object-cover rounded-md border"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                </div>
+              ))}
+              {issue.images.length > 4 && (
+                <div className="flex items-center justify-center h-20 bg-gray-100 rounded-md border">
+                  <span className="text-sm text-gray-500">
+                    +{issue.images.length - 4} more
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Estimated Cost */}
+        {issue.estimatedCost && (
+          <div className="mb-4">
+            <p className="text-sm text-gray-500">Estimated Cost</p>
+            <p className="font-medium">
+              ₹{issue.estimatedCost.toLocaleString()}
+            </p>
+          </div>
+        )}
+
+        {/* Crowdfunding Progress */}
+        {issue.crowdfunding?.isEnabled && (
+          <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-blue-700">
+                💰 Crowdfunding Active
+              </p>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                {issue.crowdfunding.contributors?.length || 0} contributors
+              </span>
+            </div>
+
+            <div className="mb-2">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-600">
+                  ₹{(issue.crowdfunding.raisedAmount || 0).toLocaleString()}{" "}
+                  raised
+                </span>
+                <span className="text-gray-600">
+                  Goal: ₹
+                  {(issue.crowdfunding.targetAmount || 0).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(
+                      issue.crowdfunding.targetAmount > 0
+                        ? (issue.crowdfunding.raisedAmount /
+                            issue.crowdfunding.targetAmount) *
+                            100
+                        : 0,
+                      100
+                    )}%`,
+                  }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-xs text-blue-600 font-medium">
+                  {issue.crowdfunding.targetAmount > 0
+                    ? Math.min(
+                        (issue.crowdfunding.raisedAmount /
+                          issue.crowdfunding.targetAmount) *
+                          100,
+                        100
+                      ).toFixed(1)
+                    : 0}
+                  % complete
+                </span>
+                {issue.crowdfunding.deadline && (
+                  <span className="text-xs text-gray-500">
+                    Ends:{" "}
+                    {new Date(issue.crowdfunding.deadline).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex justify-between items-center text-sm text-gray-500 pt-4 border-t">
+          <div className="flex items-center gap-4">
+            <span>📅 {formatDate(issue.createdAt)}</span>
+            <span>👀 {issue.viewsCount || 0} views</span>
+            <span>💬 {issue.commentsCount || 0} comments</span>
+          </div>
+          {issue.updatedAt !== issue.createdAt && (
+            <span>Updated {formatDate(issue.updatedAt)}</span>
+          )}
+        </div>
+      </Card>
+
+      <CrowdfundingModal
+        isOpen={showCrowdfundingModal}
+        onClose={() => setShowCrowdfundingModal(false)}
+        issue={issue}
+        onSuccess={(updatedIssue) => {
+          if (onIssueUpdate) {
+            onIssueUpdate(issue._id || issue.id, updatedIssue);
+          }
+          setShowCrowdfundingModal(false);
+        }}
+      />
+    </>
   );
 };
 
@@ -246,6 +349,7 @@ const IssuesListInfinite = ({
   const [filters, setFilters] = useState({
     status: "",
     category: "",
+    crowdfunding: "",
     sortBy: "createdAt",
     sortOrder: "desc",
   });
@@ -337,6 +441,14 @@ const IssuesListInfinite = ({
     );
   };
 
+  const handleIssueUpdate = (issueId, updatedIssue) => {
+    setIssues((prev) =>
+      prev.map((issue) =>
+        (issue._id || issue.id) === issueId ? updatedIssue : issue
+      )
+    );
+  };
+
   if (!user) {
     return (
       <Card className="p-6">
@@ -369,6 +481,16 @@ const IssuesListInfinite = ({
           </select>
 
           <select
+            value={filters.crowdfunding}
+            onChange={(e) => handleFilterChange("crowdfunding", e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">All Issues</option>
+            <option value="enabled">With Crowdfunding</option>
+            <option value="disabled">Without Crowdfunding</option>
+          </select>
+
+          <select
             value={filters.sortBy}
             onChange={(e) => handleFilterChange("sortBy", e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -377,6 +499,7 @@ const IssuesListInfinite = ({
             <option value="upvotes">Upvotes</option>
             <option value="priority">Priority</option>
             <option value="title">Title</option>
+            <option value="crowdfunding.raisedAmount">Funding Progress</option>
           </select>
 
           <select
@@ -431,6 +554,7 @@ const IssuesListInfinite = ({
                   key={`${issue._id || issue.id}-${index}`}
                   issue={issue}
                   onUpvote={handleUpvote}
+                  onIssueUpdate={handleIssueUpdate}
                   user={user}
                 />
               ))}
