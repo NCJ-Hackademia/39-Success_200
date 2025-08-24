@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserActions, useUserRole } from "../../store/userStore";
 import useAuth from "../../hooks/useAuth";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Button } from "../ui/button";
 import ClientOnly from "../ClientOnly";
+import NotificationPanel from "../notifications/NotificationPanel";
 import {
   Menu,
   X,
@@ -27,9 +29,11 @@ import {
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const router = useRouter();
 
   const auth = useAuth();
+  const { unreadCount } = useNotifications();
   const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
@@ -171,16 +175,30 @@ const Navbar = () => {
 
             {/* Notifications (if authenticated) */}
             {auth.isAuthenticated && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-9 h-9 p-0 relative"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-9 h-9 p-0 relative"
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </Button>
+
+                {/* Notification Dropdown */}
+                {isNotificationOpen && (
+                  <div className="absolute right-0 top-full mt-2 z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                      <NotificationPanel />
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Authentication */}

@@ -1213,4 +1213,74 @@ export const adminAPI = {
   },
 };
 
+// Notification API
+export const notificationAPI = {
+  // Get user notifications
+  getUserNotifications: async (
+    page = 1,
+    limit = 20,
+    filters?: {
+      type?: string;
+      isRead?: boolean;
+      priority?: string;
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<ApiResponse<any[]> & { unreadCount: number; pagination: any }> => {
+    const response = await api.get<
+      ApiResponse<any[]> & { unreadCount: number; pagination: any }
+    >("/api/notifications", { params: { page, limit, ...filters } });
+    return response.data;
+  },
+
+  // Get unread notification count
+  getUnreadCount: async (): Promise<ApiResponse<{ unreadCount: number }>> => {
+    const response = await api.get<ApiResponse<{ unreadCount: number }>>(
+      "/api/notifications/unread-count"
+    );
+    return response.data;
+  },
+
+  // Mark notifications as read
+  markAsRead: async (notificationIds: string[]): Promise<ApiResponse<any>> => {
+    const response = await api.patch<ApiResponse<any>>(
+      "/api/notifications/read",
+      { notificationIds }
+    );
+    return response.data;
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (): Promise<ApiResponse<any>> => {
+    const response = await api.patch<ApiResponse<any>>(
+      "/api/notifications/read-all"
+    );
+    return response.data;
+  },
+
+  // Delete notification
+  deleteNotification: async (
+    notificationId: string
+  ): Promise<ApiResponse<void>> => {
+    const response = await api.delete<ApiResponse<void>>(
+      `/api/notifications/${notificationId}`
+    );
+    return response.data;
+  },
+
+  // Create test notification (development only)
+  createTestNotification: async (data: {
+    type?: string;
+    title?: string;
+    message?: string;
+    priority?: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await api.post<ApiResponse<any>>(
+      "/api/notifications/test",
+      data
+    );
+    return response.data;
+  },
+};
+
 export default api;

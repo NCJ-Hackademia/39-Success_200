@@ -14,6 +14,7 @@ import proposalRoutes from "./routes/proposal.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import crowdfundingRoutes from "./routes/crowdfunding.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import morgan from "morgan";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { requestLogger } from "./utils/logger.js";
@@ -46,6 +47,7 @@ app.use("/api/proposals", proposalRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/crowdfunding", crowdfundingRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check
 app.get("/", (req, res) => {

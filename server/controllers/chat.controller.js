@@ -2,6 +2,8 @@ import ChatRoom from "../models/ChatRoom.js";
 import Message from "../models/Message.js";
 import Booking from "../models/Booking.js";
 import Proposal from "../models/Proposal.js";
+import NotificationService from "../services/NotificationService.js";
+import { emitToChatRoom, emitToUser } from "../config/socket.js";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import multer from "multer";
@@ -183,8 +185,30 @@ export const sendMessage = async (req, res) => {
     // Populate sender info
     await message.populate("senderId", "name email role");
 
-    // TODO: Emit real-time event to other participants
-    // io.to(chatRoomId).emit('new_message', message);
+    // Get the io instance for real-time communication
+    const io = req.app.get("io");
+
+    // Emit real-time message to chat room participants
+    emitToChatRoom(io, chatRoomId, "new_message", {
+      message,
+      chatRoomId,
+      timestamp: new Date(),
+    });
+
+    // Send notification to other participants
+    const notificationService = new NotificationService(io);
+    const otherParticipants = chatRoom.participants.filter(
+      (p) => p.toString() !== req.user.id
+    );
+
+    for (const participantId of otherParticipants) {
+      await notificationService.notifyNewMessage(
+        chatRoomId,
+        req.user.id,
+        participantId,
+        content.text || "New message"
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -247,6 +271,43 @@ export const sendPriceOffer = async (req, res) => {
     });
 
     await message.populate("senderId", "name email role");
+
+    // Get the io instance for real-time communication
+    const io = req.app.get("io");
+
+    // Emit real-time price offer to chat room participants
+    emitToChatRoom(io, chatRoomId, "new_price_offer", {
+      message,
+      offer: {
+        amount: parseFloat(amount),
+        description: description || "",
+        validUntil: message.content.priceOffer.validUntil,
+      },
+      chatRoomId,
+      timestamp: new Date(),
+    });
+
+    // Send notification to other participants
+    const notificationService = new NotificationService(io);
+    const otherParticipants = chatRoom.participants.filter(
+      (p) => p.toString() !== req.user.id
+    );
+
+    // Get booking details for notification context
+    const booking = await Booking.findById(chatRoom.bookingId).populate(
+      "service",
+      "name"
+    );
+
+    for (const participantId of otherParticipants) {
+      await notificationService.notifyPriceOffer(
+        chatRoomId,
+        participantId,
+        req.user.id,
+        parseFloat(amount),
+        booking.service?.name || "Service"
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -427,6 +488,34 @@ export const respondToPriceOffer = async (req, res) => {
     });
 
     await responseMsg.populate("senderId", "name email role");
+
+    // Get the io instance for real-time communication
+    const io = req.app.get("io");
+
+    // Emit real-time price offer response to chat room participants
+    emitToChatRoom(io, chatRoomId, "price_offer_response", {
+      message: responseMsg,
+      action,
+      originalOffer: priceOfferMessage.content.priceOffer,
+      chatRoomId,
+      timestamp: new Date(),
+    });
+
+    // Send notification to other participants about the response
+    const notificationService = new NotificationService(io);
+    const otherParticipants = chatRoom.participants.filter(
+      (p) => p.toString() !== req.user.id
+    );
+
+    for (const participantId of otherParticipants) {
+      await notificationService.notifyPriceOfferResponse(
+        chatRoomId,
+        participantId,
+        req.user.id,
+        action,
+        priceOfferMessage.content.priceOffer.amount
+      );
+    }
 
     res.status(200).json({
       success: true,
